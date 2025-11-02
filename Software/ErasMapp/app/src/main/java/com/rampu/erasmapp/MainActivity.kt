@@ -11,12 +11,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { App() }
+        setContent { AppRoot() }
     }
 }
 
 @Composable
-fun App(){
+fun AppRoot(){
     val navController = rememberNavController()
     AppNavGraph(navController = navController)
 }

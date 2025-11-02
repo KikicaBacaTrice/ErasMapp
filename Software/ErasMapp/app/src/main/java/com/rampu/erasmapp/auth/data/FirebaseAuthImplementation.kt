@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
-class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth) : IAuthRepository {
+class FirebaseAuthImplementation (private val auth: FirebaseAuth) : IAuthRepository {
 
     override val authState: Flow<UserAccount?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener{ firebaseAuth ->
@@ -39,7 +39,6 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth
     override suspend fun signIn(email: String, password: String): AuthResult {
         return try {
             val result = auth.signInWithEmailAndPassword(email,password).await()
-            Log.d("firebase_auth", "result: ${result.user?.email}")
             val user = result.user ?: return AuthResult.Failure(
                 reason = FailureReason.OTHER,
                 message = "User was null")

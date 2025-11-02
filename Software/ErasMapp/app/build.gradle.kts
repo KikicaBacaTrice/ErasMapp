@@ -69,4 +69,14 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
+    val koin_version = "4.1.0"
+    implementation(project.dependencies.platform("io.insert-koin:koin-bom:$koin_version"))
+    implementation("io.insert-koin:koin-core")
+    implementation("io.insert-koin:koin-compose")
+    implementation("io.insert-koin:koin-compose-viewmodel")
+    implementation("io.insert-koin:koin-compose-viewmodel-navigation")
+
+
+    implementation("io.insert-koin:koin-androidx-compose:${koin_version}")
 }
