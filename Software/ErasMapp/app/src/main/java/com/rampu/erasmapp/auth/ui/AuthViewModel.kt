@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val email: String = "",
     val password: String = "",
+    val name: String = "",
     val loading: Boolean = false,
     val error: String? = null,
     val loggedInAs: UserAccount? = null
@@ -48,9 +49,10 @@ class AuthViewModel (private val authRepository: IAuthRepository) : ViewModel() 
     fun register() = viewModelScope.launch {
         val email = state.value.email
         val password = state.value.password
+        val name = state.value.name
 
         state.update { it.copy(loading = true, error = null) }
-        when(val result = authRepository.register(email = email, password = password)) {
+        when(val result = authRepository.register(email = email, password = password, name = name)) {
             is AuthResult.Success -> state.update { it.copy(loading = false, loggedInAs = result.user, error = null) }
             is AuthResult.Failure -> state.update { it.copy(loading = false, error = result.message) }
         }

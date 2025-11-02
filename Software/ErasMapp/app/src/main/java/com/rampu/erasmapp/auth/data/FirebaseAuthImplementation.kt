@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.auth.userProfileChangeRequest
 import com.rampu.erasmapp.auth.domain.AuthResult
 import com.rampu.erasmapp.auth.domain.FailureReason
 import com.rampu.erasmapp.auth.domain.IAuthRepository
@@ -24,7 +25,8 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth
                 if(user == null) null
                 else UserAccount(
                     uid = user.uid,
-                    email = user.email
+                    email = user.email,
+                    name = user.displayName
                 )
             )
         }
@@ -45,7 +47,9 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth
             AuthResult.Success(
                 user = UserAccount(
                     uid = user.uid,
-                    email = user.email)
+                    email = user.email,
+                    name = user.displayName
+                )
             )
 
         } catch (e: CancellationException){
@@ -61,7 +65,7 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth
 
     }
 
-    override suspend fun register(email: String, password: String): AuthResult {
+    override suspend fun register(email: String, password: String, name: String): AuthResult {
         return try{
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user ?: return AuthResult.Failure(
@@ -71,7 +75,8 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth = Firebase.auth
             AuthResult.Success(
                 user = UserAccount(
                     uid = user.uid,
-                    email = user.email
+                    email = user.email,
+                    name = user.displayName
                 )
             )
 
