@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rampu.erasmapp.auth.domain.AuthResult
 import com.rampu.erasmapp.auth.domain.IAuthRepository
+import com.rampu.erasmapp.auth.validators.Validators
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -28,6 +29,20 @@ class RegisterViewModel (private val repo: IAuthRepository) : ViewModel(){
     fun register() = viewModelScope.launch {
         val email = uiState.value.email
         val password = uiState.value.password
+        val confirmedPassword = uiState.value.confirmPassword
+
+        val emailError = Validators.validateEmail(email)
+        val passwordError = Validators.validatePassword(password)
+        val confirmedPasswordError = Validators.validateConfirmPassword(password, confirmedPassword)
+
+        if(emailError != null || passwordError != null || confirmedPasswordError != null){
+            uiState.update { it.copy(
+                emailError = emailError?.msg,
+                passwordError = passwordError?.msg,
+                confirmPasswordError = confirmedPasswordError?.msg)}
+
+            return@launch
+        }
 
         uiState.update { it.copy(isLoading = true, error = null) }
         when(val result = repo.register(email = email, password = password)){

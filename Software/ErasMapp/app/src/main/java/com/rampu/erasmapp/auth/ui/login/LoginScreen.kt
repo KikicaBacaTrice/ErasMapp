@@ -63,7 +63,10 @@ fun LoginScreen(
 
                 },
                 placeholder = stringResource(R.string.email),
-                isError = false
+                isError = state.emailError != null,
+                supportingText = {
+                    if(state.emailError != null) Text(text = state.emailError)
+                }
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -83,7 +86,10 @@ fun LoginScreen(
 
                 },
                 placeholder = stringResource(R.string.password),
-                isError = false
+                isError = state.passwordError != null,
+                supportingText = {
+                    if(state.passwordError != null) Text(text = state.passwordError)
+                }
             )
 
             Spacer(modifier = Modifier.height(30.dp))
