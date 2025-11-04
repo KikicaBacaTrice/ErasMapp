@@ -19,7 +19,8 @@ private val DarkColorScheme = darkColorScheme(
     surface = DarkBackground,
     primary = DarkPrimary,
     secondary = DarkSecondary,
-    tertiary = DarkAccent
+    tertiary = DarkAccent,
+    onPrimary = DarkText
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -29,7 +30,8 @@ private val LightColorScheme = lightColorScheme(
     surface = LightBackground,
     primary = LightPrimary,
     secondary = LightSecondary,
-    tertiary = LightAccent
+    tertiary = LightAccent,
+    onPrimary =  LightBackground
 )
 
 @Composable
