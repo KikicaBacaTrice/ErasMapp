@@ -12,7 +12,20 @@
           "package_name": "com.rampu.erasmapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "879175575823-78mrdh2ac84uagiunhpg3fh5ebfuesjm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rampu.erasmapp",
+            "certificate_hash": "29badb58a47598a5321208c53845e86d69c98993"
+          }
+        },
+        {
+          "client_id": "879175575823-rf75m6skj5aqit4k79vrlo82mnt902hj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBLUQ534JnOxClSeim7j7YfKREaVzyMh5E"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "879175575823-rf75m6skj5aqit4k79vrlo82mnt902hj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

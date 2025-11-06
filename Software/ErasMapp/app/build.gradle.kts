@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -8,10 +10,28 @@ plugins {
 }
 
 android {
+
     namespace = "com.rampu.erasmapp"
     compileSdk {
         version = release(36)
     }
+
+    val props = Properties().apply {
+        val f = rootProject.file("keystores/dev.properties")
+        if (f.exists()) f.inputStream().use(::load)
+    }
+
+    signingConfigs {
+        create("dev") {
+            val storePath = props.getProperty("storeFile")
+                ?: "$rootDir/keystores/dev.keystore"
+            storeFile = file(storePath)
+            storePassword = props.getProperty("storePassword") ?: "rampu_dev"
+            keyAlias = props.getProperty("keyAlias") ?: "dev"
+            keyPassword = props.getProperty("keyPassword") ?: "rampu_dev"
+        }
+    }
+
 
     defaultConfig {
         applicationId = "com.rampu.erasmapp"
@@ -24,6 +44,11 @@ android {
     }
 
     buildTypes {
+
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("dev")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -64,6 +89,10 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     val nav_version = "2.9.5"
 
