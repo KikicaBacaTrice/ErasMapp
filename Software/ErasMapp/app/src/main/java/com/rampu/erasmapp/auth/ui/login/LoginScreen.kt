@@ -1,6 +1,7 @@
 package com.rampu.erasmapp.auth.ui.login
 
 import android.content.res.Configuration
+import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,25 +13,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rampu.erasmapp.R
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
+import com.rampu.erasmapp.common.ui.components.Logo
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
@@ -43,11 +57,26 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ){
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+
+            Logo(
+                modifier = Modifier
+                    .size(150.dp)
+            )
+
+            Spacer(Modifier.height(30.dp))
+
+            Text(
+                text = stringResource(R.string.sign_in_to_your_account),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+            )
+
+            Spacer(Modifier.height(30.dp))
+
             LabeledInputField(
                 value = state.email,
                 onValueChange = {
@@ -69,7 +98,7 @@ fun LoginScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(Modifier.height(10.dp))
 
             LabeledInputField(
                 value = state.password,
@@ -92,7 +121,7 @@ fun LoginScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(Modifier.height(10.dp))
 
             Button(
                 modifier = Modifier
@@ -101,10 +130,6 @@ fun LoginScreen(
                 onClick = {
                     onEvent(LoginEvent.Submit)
                 },
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
                 shape = RoundedCornerShape(5.dp),
                 contentPadding = PaddingValues(vertical = 15.dp),
                 elevation = ButtonDefaults.buttonElevation(
@@ -115,6 +140,65 @@ fun LoginScreen(
                     text = stringResource(R.string.sign_in),
                 )
             }
+
+            Spacer(Modifier.height(30.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                verticalAlignment = Alignment.CenterVertically,
+            ){
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                )
+                Text(
+                    text = "OR",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                )
+            }
+
+            Spacer(Modifier.height(30.dp))
+
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f),
+
+                onClick = {
+                    //TODO: add google login processing
+                },
+                shape = RoundedCornerShape(5.dp),
+                contentPadding = PaddingValues(vertical = 15.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ){
+                    Icon(
+                        painter = painterResource(R.drawable.google_logo),
+                        contentDescription = stringResource(R.string.sign_in_with_google),
+                        tint = Color.Unspecified,
+                        modifier = Modifier.requiredSize(20.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(15.dp))
+
+                    Text(
+                        text = stringResource(R.string.sign_in_with_google),
+                    )
+                }
+
+            }
+
+
+
         }
 
         Row(
