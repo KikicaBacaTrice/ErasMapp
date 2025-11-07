@@ -1,5 +1,6 @@
 package com.rampu.erasmapp.auth.ui
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -30,7 +31,10 @@ fun AuthGraph(){
             NavHost(
                 navController = navController,
                 startDestination = LoginRoute,
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
             ){
                 composable<LoginRoute> {
                     val vm: LoginViewModel = koinViewModel()
@@ -48,7 +52,8 @@ fun AuthGraph(){
                     LoginScreen(
                         state = state.value,
                         onEvent = vm::onEvent,
-                        onNavigateToRegister = {navController.navigate(RegisterRoute)}
+                        onNavigateToRegister = {navController.navigate(RegisterRoute)},
+                        contentPadding = innerPadding
                     )
 
                 }
