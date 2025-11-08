@@ -60,7 +60,8 @@ fun LoginScreen(
     state: LoginUiState,
     onEvent: (event: LoginEvent) -> Unit,
     onNavigateToRegister: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues()
+    contentPadding: PaddingValues = PaddingValues(),
+    onGoogleSignIn: () -> Unit
 ){
 
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -229,9 +230,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxWidth(0.8f),
 
-            onClick = {
-                //TODO: add google login processing
-            },
+            onClick = onGoogleSignIn,
             shape = RoundedCornerShape(5.dp),
             contentPadding = PaddingValues(vertical = 15.dp),
             enabled = !state.isLoading
@@ -269,7 +268,8 @@ fun LoginScreenPreview(){
                     state = LoginUiState(),
                     onEvent = {},
                     onNavigateToRegister = {},
-                    contentPadding = WindowInsets.systemBars.asPaddingValues()
+                    contentPadding = WindowInsets.systemBars.asPaddingValues(),
+                    onGoogleSignIn = {}
                 )
             }
         }

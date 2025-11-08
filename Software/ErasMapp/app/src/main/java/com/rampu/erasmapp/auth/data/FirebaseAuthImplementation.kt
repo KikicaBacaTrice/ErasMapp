@@ -1,6 +1,7 @@
 package com.rampu.erasmapp.auth.data
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.rampu.erasmapp.auth.domain.AuthResult
 import com.rampu.erasmapp.auth.domain.FailureReason
 import com.rampu.erasmapp.auth.domain.IAuthRepository
@@ -85,5 +86,32 @@ class FirebaseAuthImplementation (private val auth: FirebaseAuth) : IAuthReposit
     }
 
     override suspend fun signOut() = auth.signOut()
+
+    override suspend fun signInWithGoogle(idToken: String) : AuthResult {
+        return try{
+            val credential = GoogleAuthProvider.getCredential(idToken,null)
+            val result = auth.signInWithCredential(credential).await()
+            val user = result.user ?: return AuthResult.Failure(
+                reason = FailureReason.OTHER,
+                message = "user was null")
+
+            AuthResult.Success(
+                user = UserAccount(
+                    uid = user.uid,
+                    email = user.email
+                )
+            )
+
+        } catch (e: CancellationException){
+            throw e
+        }catch (e: Exception){
+            val reason = FirebaseAuthFailureMapper.mapToFailureReason(e)
+            val message = FirebaseAuthFailureMapper.niceMessage(reason)
+            AuthResult.Failure(
+                reason = reason,
+                message = message
+            )
+        }
+    }
 
 }

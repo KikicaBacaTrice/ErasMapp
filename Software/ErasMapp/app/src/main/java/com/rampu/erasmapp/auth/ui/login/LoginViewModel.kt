@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.koin.core.context.loadKoinModules
 
 class LoginViewModel (private val repo: IAuthRepository) : ViewModel(){
 
@@ -42,6 +43,20 @@ class LoginViewModel (private val repo: IAuthRepository) : ViewModel(){
 
         uiState.update { it.copy(isLoading = true) }
         when(val result = repo.signIn(email,password)){
+            is AuthResult.Success -> {
+                uiState.update { it.copy(isLoading = false) }
+                effect.emit(LoginEffect.NavigateHome)
+            }
+            is AuthResult.Failure -> {
+                uiState.update { it.copy(isLoading = false) }
+                effect.emit(LoginEffect.ShowError(result.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    fun signInWithGoogle(idToken: String) = viewModelScope.launch {
+        uiState.update { it.copy(isLoading = true) }
+        when (val result = repo.signInWithGoogle(idToken)){
             is AuthResult.Success -> {
                 uiState.update { it.copy(isLoading = false) }
                 effect.emit(LoginEffect.NavigateHome)
