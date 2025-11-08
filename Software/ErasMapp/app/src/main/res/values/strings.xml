@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">ErasMapp</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="sign_in_to_your_account">Sign In To Your Account</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="don_t_have_an_account">Don’t have an account?</string>
+    <string name="password_visibility_icon">Password visibility icon</string>
+</resources>
