@@ -1,16 +1,26 @@
 package com.rampu.erasmapp.schedule.ui
 
 import androidx.lifecycle.ViewModel
-import com.rampu.erasmapp.schedule.data.ScheduleEvent
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.util.UUID
+import androidx.lifecycle.viewModelScope
+import com.rampu.erasmapp.schedule.domain.ScheduleEvent
+import com.rampu.erasmapp.schedule.data.ScheduleRepository
+import com.rampu.erasmapp.schedule.data.ScheduleSyncState
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.util.UUID
 
 data class ScheduleUiState(
-    val events: List<ScheduleEvent> = demoEvents(),
+    val events: List<ScheduleEvent> = emptyList(),
+    val isSyncing: Boolean = true,
+    val syncErrorMessage: String? = null,
+    val isSignedOut: Boolean = false,
+    val isSaving: Boolean = false,
+    val transientMessage: String? = null,
     val showAddEventDialog: Boolean = false,
     val newTitle: String = "",
     val newDateText: String = LocalDate.now().toString(),
@@ -33,9 +43,59 @@ data class ScheduleUiState(
     val isWeeklyView: Boolean = true
 )
 
-class ScheduleViewModel : ViewModel() {
+class ScheduleViewModel(
+    private val repository: ScheduleRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(ScheduleUiState())
     val uiState = _uiState.asStateFlow()
+    private var observeJob: Job? = null
+
+    init {
+        observeEvents()
+    }
+
+    private fun observeEvents() {
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
+            repository.observeEvents().collect { syncState ->
+                when (syncState) {
+                    ScheduleSyncState.Loading -> _uiState.update {
+                        it.copy(isSyncing = true, syncErrorMessage = null)
+                    }
+
+                    is ScheduleSyncState.Success -> _uiState.update {
+                        it.copy(
+                            events = syncState.events,
+                            isSyncing = false,
+                            syncErrorMessage = null,
+                            isSignedOut = false
+                        )
+                    }
+
+                    is ScheduleSyncState.Error -> _uiState.update {
+                        it.copy(
+                            isSyncing = false,
+                            syncErrorMessage = syncState.message,
+                            isSignedOut = false
+                        )
+                    }
+
+                    ScheduleSyncState.SignedOut -> _uiState.update {
+                        it.copy(
+                            events = emptyList(),
+                            isSyncing = false,
+                            isSignedOut = true,
+                            syncErrorMessage = "Sign in to view your schedule."
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun refreshEvents() {
+        observeEvents()
+    }
 
     fun setAddDialogVisible(show: Boolean) {
         _uiState.update { it.copy(showAddEventDialog = show) }
@@ -61,38 +121,37 @@ class ScheduleViewModel : ViewModel() {
     fun saveNewEvent() {
         val state = _uiState.value
         if (state.newTitle.isBlank() || state.newStart.isBlank() || state.newEnd.isBlank()) {
+            _uiState.update {
+                it.copy(transientMessage = "Title, start time and end time are required.")
+            }
             return
         }
 
-        val updatedEvents = state.events.toMutableList().apply {
-            add(
-                ScheduleEvent(
-                    id = UUID.randomUUID().toString(),
-                    title = state.newTitle,
-                    date = state.newDate,
-                    startTime = state.newStart,
-                    endTime = state.newEnd,
-                    location = state.newLocation.ifBlank { "-" },
-                    category = state.newCategory.ifBlank { "Other" },
-                    isEveryWeek = state.newIsEveryWeek
-                )
-            )
-        }
+        val newEvent = ScheduleEvent(
+            id = UUID.randomUUID().toString(),
+            title = state.newTitle,
+            date = state.newDate,
+            startTime = state.newStart,
+            endTime = state.newEnd,
+            location = state.newLocation.ifBlank { "-" },
+            category = state.newCategory.ifBlank { "Other" },
+            isEveryWeek = state.newIsEveryWeek
+        )
 
-        val resetDate = LocalDate.now()
-        _uiState.update {
-            it.copy(
-                events = updatedEvents,
-                showAddEventDialog = false,
-                newTitle = "",
-                newStart = "",
-                newEnd = "",
-                newDate = resetDate,
-                newDateText = resetDate.toString(),
-                newLocation = "",
-                newCategory = "",
-                newIsEveryWeek = false
-            )
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            val result = repository.createEvent(newEvent)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.resetNewEventForm()
+                } else {
+                    it.copy(
+                        isSaving = false,
+                        transientMessage = result.exceptionOrNull()?.localizedMessage
+                            ?: "Unable to save event. Try again."
+                    )
+                }
+            }
         }
     }
 
@@ -126,7 +185,11 @@ class ScheduleViewModel : ViewModel() {
     fun saveEditedEvent() {
         val state = _uiState.value
         val selected = state.selectedEvent ?: return
-        val parsedDate = runCatching { LocalDate.parse(state.editDateText) }.getOrNull() ?: return
+        val parsedDate = runCatching { LocalDate.parse(state.editDateText) }.getOrNull()
+        if (parsedDate == null) {
+            _uiState.update { it.copy(transientMessage = "Date must be in YYYY-MM-DD format.") }
+            return
+        }
 
         val updatedEvent = selected.copy(
             title = state.editTitle,
@@ -138,16 +201,24 @@ class ScheduleViewModel : ViewModel() {
             isEveryWeek = state.editIsEveryWeek
         )
 
-        _uiState.update {
-            val events = it.events.toMutableList()
-            val index = events.indexOfFirst { event -> event.id == selected.id }
-            if (index != -1) {
-                events[index] = updatedEvent
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            val result = repository.updateEvent(updatedEvent)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        selectedEvent = null,
+                        isSaving = false,
+                        transientMessage = "Event updated"
+                    )
+                } else {
+                    it.copy(
+                        isSaving = false,
+                        transientMessage = result.exceptionOrNull()?.localizedMessage
+                            ?: "Unable to update event. Try again."
+                    )
+                }
             }
-            it.copy(
-                events = events,
-                selectedEvent = null
-            )
         }
     }
 
@@ -170,26 +241,48 @@ class ScheduleViewModel : ViewModel() {
     fun nextDay() {
         _uiState.update { it.copy(currentDay = it.currentDay.plusDays(1)) }
     }
-}
 
-private fun demoEvents(): List<ScheduleEvent> {
-    val monday = LocalDate.now().with(DayOfWeek.MONDAY)
-    return mutableListOf(
-        ScheduleEvent(
-            "1",
-            "RWA",
-            monday,
-            "10:00",
-            "12:00",
-            location = "Room 3, FOI1",
-            category = "Lecture",
-            isEveryWeek = true
-        ),
-        ScheduleEvent("2", "RAMPU", monday, "12:00", "15:00", location = "Room 3, FOI1", category = "Lecture", isEveryWeek = true),
-        ScheduleEvent("3", "RPP", monday.plusDays(1), "8:00", "10:00", location = "Room 3, FOI2", category = "Lecture", isEveryWeek = true),
-        ScheduleEvent("4", "RAMPU", monday.plusDays(1), "12:00", "18:00", location = "-", category = "Other", isEveryWeek = false),
-        ScheduleEvent("5", "POP", monday.plusDays(2), "12:00", "14:00", location = "Room 7, FOI1", category = "Lecture", isEveryWeek = true),
-        ScheduleEvent("6", "POP", monday.plusDays(2), "12:00", "14:00", location = "Room 7, FOI1", category = "Mid-Term", isEveryWeek = false),
-        ScheduleEvent("7", "RPP", monday.plusDays(3), "17:00", "18:30", location = "Room 4, FOI1", category = "Exercises", isEveryWeek = true)
-    )
+    fun deleteSelectedEvent() {
+        val eventId = _uiState.value.selectedEvent?.id ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            val result = repository.deleteEvent(eventId)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        selectedEvent = null,
+                        isSaving = false,
+                        transientMessage = "Event deleted"
+                    )
+                } else {
+                    it.copy(
+                        isSaving = false,
+                        transientMessage = result.exceptionOrNull()?.localizedMessage
+                            ?: "Unable to delete event. Try again."
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearTransientMessage() {
+        _uiState.update { it.copy(transientMessage = null) }
+    }
+
+    private fun ScheduleUiState.resetNewEventForm(): ScheduleUiState {
+        val resetDate = LocalDate.now()
+        return copy(
+            showAddEventDialog = false,
+            newTitle = "",
+            newStart = "",
+            newEnd = "",
+            newDate = resetDate,
+            newDateText = resetDate.toString(),
+            newLocation = "",
+            newCategory = "",
+            newIsEveryWeek = false,
+            isSaving = false,
+            transientMessage = "Event saved"
+        )
+    }
 }
