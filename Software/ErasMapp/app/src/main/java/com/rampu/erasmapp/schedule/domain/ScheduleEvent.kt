@@ -1,6 +1,7 @@
-package com.rampu.erasmapp.schedule.data
+package com.rampu.erasmapp.schedule.domain
 
 import java.time.LocalDate
+
 data class ScheduleEvent(
     val id: String,
     var title: String,
