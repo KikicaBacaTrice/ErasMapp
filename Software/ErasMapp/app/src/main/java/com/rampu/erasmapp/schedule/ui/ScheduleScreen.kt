@@ -21,27 +21,33 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-//import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-//import androidx.compose.material3.menuAnchor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -63,7 +69,7 @@ import java.util.Locale
 fun ScheduleScreen(
     onBack: () -> Unit = {}
 ) {
-    val viewModel: ScheduleViewModel = viewModel()
+    val viewModel: ScheduleViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
     val events = uiState.events
     val showDialog = uiState.showAddEventDialog
@@ -99,7 +105,11 @@ fun ScheduleScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.setAddDialogVisible(true) },
+                onClick = {
+                    if (!uiState.isSignedOut && !uiState.isSaving) {
+                        viewModel.setAddDialogVisible(true)
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Event")
@@ -119,14 +129,19 @@ fun ScheduleScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Schedule",
-                    fontSize = 42.sp,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.W600
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        "Schedule",
+                        fontSize = 42.sp,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.W600
+                    )
+                }
                 Button(onClick = { viewModel.toggleViewMode() }) {
                     Text(if (isWeeklyView) "Weekly View" else "Daily View")
                 }
@@ -134,7 +149,27 @@ fun ScheduleScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (isWeeklyView) {
+            if (uiState.isSyncing && events.isNotEmpty()) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            val isInitialLoading = uiState.isSyncing && events.isEmpty()
+
+            if (isInitialLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = true),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (isWeeklyView) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -362,10 +397,18 @@ fun ScheduleScreen(
         AlertDialog(
             onDismissRequest = { viewModel.setAddDialogVisible(false) },
             confirmButton = {
-                TextButton(onClick = { viewModel.saveNewEvent() }) { Text("Save") }
+                TextButton(
+                    onClick = { viewModel.saveNewEvent() },
+                    enabled = !uiState.isSaving
+                ) {
+                    Text(if (uiState.isSaving) "Saving..." else "Save")
+                }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.setAddDialogVisible(false) }) { Text("Cancel") }
+                TextButton(
+                    onClick = { viewModel.setAddDialogVisible(false) },
+                    enabled = !uiState.isSaving
+                ) { Text("Cancel") }
             },
             title = { Text("Add New Event") },
             text = {
@@ -480,10 +523,29 @@ fun ScheduleScreen(
         AlertDialog(
             onDismissRequest = { viewModel.dismissSelectedEvent() },
             confirmButton = {
-                TextButton(onClick = { viewModel.saveEditedEvent() }) { Text("Save Changes") }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = { viewModel.deleteSelectedEvent() },
+                        enabled = !uiState.isSaving
+                    ) {
+                        Text(
+                            "Delete",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    TextButton(
+                        onClick = { viewModel.saveEditedEvent() },
+                        enabled = !uiState.isSaving
+                    ) {
+                        Text(if (uiState.isSaving) "Saving..." else "Save Changes")
+                    }
+                }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.dismissSelectedEvent() }) {
+                TextButton(
+                    onClick = { viewModel.dismissSelectedEvent() },
+                    enabled = !uiState.isSaving
+                ) {
                     Text("Close")
                 }
             },
@@ -591,3 +653,5 @@ fun ScheduleScreen(
         )
     }
 }
+
+
