@@ -130,3 +130,9 @@ dependencies {
     implementation(libs.maps.compose)
 }
 
+
+
+    // Kalendar
+    implementation("com.kizitonwose.calendar:compose:2.9.0")
+
+}
