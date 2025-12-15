@@ -28,6 +28,7 @@ class EventCalendarViewModel : ViewModel() {
         val today = LocalDate.now()
         val presetEvents = listOf(
             CalendarEvent(
+                id= 1,
                 date = today,
                 title = "Campus Tour",
                 time = "10:00 - 12:00",
@@ -35,6 +36,7 @@ class EventCalendarViewModel : ViewModel() {
                 description = "Guided walk through faculty buildings and student services."
             ),
             CalendarEvent(
+                id= 2,
                 date = today.plusDays(2),
                 title = "Erasmus Meetup",
                 time = "18:00 - 20:00",
@@ -42,6 +44,7 @@ class EventCalendarViewModel : ViewModel() {
                 description = "Casual networking for exchange students with snacks and music."
             ),
             CalendarEvent(
+                id= 3,
                 date = today.plusWeeks(1),
                 title = "Project Prep2",
                 time = "14:00 - 16:30",
@@ -49,6 +52,7 @@ class EventCalendarViewModel : ViewModel() {
                 description = "Hands-on session to kick off team projects and set milestones."
             ),
             CalendarEvent(
+                id= 4,
                 date = today.plusWeeks(1),
                 title = "City Walk Through",
                 time = "17:00 - 19:00",
@@ -56,6 +60,7 @@ class EventCalendarViewModel : ViewModel() {
                 description = "Learning the city of Varaždin."
             ),
             CalendarEvent(
+                id= 5,
                 date = today.minusDays(1),
                 title = "Project Prep1",
                 time = "09:00 - 11:00",
