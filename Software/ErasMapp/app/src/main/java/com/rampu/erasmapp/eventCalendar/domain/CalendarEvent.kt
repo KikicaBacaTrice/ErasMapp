@@ -3,7 +3,7 @@ package com.rampu.erasmapp.eventCalendar.domain
 import java.time.LocalDate
 
 data class CalendarEvent(
-    val id: Number,
+    val id: String,
     val date: LocalDate,
     val title: String,
     val time: String,

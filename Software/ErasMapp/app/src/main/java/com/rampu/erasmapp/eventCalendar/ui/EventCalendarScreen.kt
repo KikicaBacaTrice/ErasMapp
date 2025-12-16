@@ -16,15 +16,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +66,9 @@ fun EventCalendarScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val events = uiState.events
+    val showDialog = uiState.showAddCalendarEventDialog
     val selectedDate = uiState.selectedDate
+
 
     val startMonth = YearMonth.now().minusMonths(3)
     val endMonth = YearMonth.now().plusMonths(3)
@@ -66,7 +83,21 @@ fun EventCalendarScreen(
         firstDayOfWeek = daysOfWeek.first()
     )
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    if (!uiState.isSignedOut && !uiState.isSaving) {
+                        viewModel.setAddDialogVisible(true)
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Event")
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -152,7 +183,69 @@ fun EventCalendarScreen(
             }
         }
     }
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.setAddDialogVisible(false) },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.saveNewEvent() },
+                    enabled = !uiState.isSaving
+                ) {
+                    Text(if (uiState.isSaving) "Saving..." else "Save")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.setAddDialogVisible(false) },
+                    enabled = !uiState.isSaving
+                ) { Text("Cancel") }
+            },
+            title = { Text("Add New Event") },
+            text = {
+                val addDialogScroll = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(addDialogScroll),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = uiState.newTitle,
+                        onValueChange = viewModel::updateNewTitle,
+                        label = { Text("Title") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.newDateText,
+                        onValueChange = viewModel::updateNewDateText,
+                        label = { Text("Date (YYYY-MM-DD)") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.newTime,
+                        onValueChange = viewModel::updateNewTime,
+                        label = { Text("Time") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.newLocation,
+                        onValueChange = viewModel::updateNewLocation,
+                        label = { Text("Location") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.newDescription,
+                        onValueChange = viewModel::updateNewDescription,
+                        label = { Text("Description") },
+                        singleLine = true
+                    )
+                }
+            }
+        )
+    }
 }
+
+
 
 @Composable
 fun MonthCalendar(

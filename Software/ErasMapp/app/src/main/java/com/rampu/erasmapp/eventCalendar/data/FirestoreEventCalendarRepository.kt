@@ -8,6 +8,7 @@ import com.rampu.erasmapp.eventCalendar.domain.CalendarEvent
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.collections.orEmpty
@@ -60,6 +61,19 @@ class FirestoreEventCalendarRepository(
             auth.removeAuthStateListener(authListener)
         }
     }
+
+    override suspend fun createEvent(event: CalendarEvent): Result<Unit> = runCatching {
+        auth.currentUser ?: throw IllegalStateException("Missing user session.")
+        val finalEvent = if (event.id.isBlank()) {
+            event.copy(id = firestore.collection("calendarEvents").document().id)
+        } else {
+            event
+        }
+        firestore.calendarEventsFS()
+            .document(finalEvent.id)
+            .set(finalEvent.toFirestoreMap(dateFormatter))
+            .await()
+    }
 }
 
 private fun FirebaseFirestore.calendarEventsFS() =
@@ -70,12 +84,13 @@ private fun DocumentSnapshot.toCalendarEvent(formatter: DateTimeFormatter): Cale
     val parsedDate = runCatching { LocalDate.parse(dateText, formatter) }.getOrNull() ?: return null
     val title = getString("title") ?: return null
 
-    val numericId: Number = getLong("id")
-        ?: getDouble("id")?.toLong()
-        ?: id.hashCode().toLong()
+    val stringId: String = getString("id")
+        ?: getLong("id")?.toString()
+        ?: getDouble("id")?.toLong()?.toString()
+        ?: id
 
     return CalendarEvent(
-        id = numericId,
+        id = stringId,
         date = parsedDate,
         title = title,
         time = getString("time") ?: "-",
@@ -83,3 +98,12 @@ private fun DocumentSnapshot.toCalendarEvent(formatter: DateTimeFormatter): Cale
         description = getString("description") ?: "-"
     )
 }
+
+private fun CalendarEvent.toFirestoreMap(formatter: DateTimeFormatter) = mapOf(
+    "id" to id,
+    "title" to title,
+    "date" to formatter.format(date),
+    "time" to time,
+    "location" to location,
+    "description" to description,
+)
