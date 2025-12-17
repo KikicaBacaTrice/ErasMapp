@@ -5,3 +5,4 @@ import kotlinx.serialization.Serializable
 @Serializable object HomeRoute
 @Serializable object ScheduleRoute
 @Serializable object EventCalendarRoute
+@Serializable object AdminRoute
