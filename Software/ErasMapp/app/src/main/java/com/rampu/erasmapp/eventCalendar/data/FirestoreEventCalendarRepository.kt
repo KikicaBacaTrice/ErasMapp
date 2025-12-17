@@ -106,6 +106,13 @@ class FirestoreEventCalendarRepository(
             .set(finalEvent.toFirestoreMap(dateFormatter))
             .await()
     }
+
+    override suspend fun deleteEvent(eventId: String): Result<Unit> = runCatching {
+        firestore.calendarEventsFS()
+            .document(eventId)
+            .delete()
+            .await()
+    }
 }
 
 private fun FirebaseFirestore.calendarEventsFS() =

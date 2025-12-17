@@ -7,6 +7,7 @@ interface EventCalendarRepository {
     fun observeEvents(): Flow<EventCalendarSyncState>
     fun observeAdminStatus(): Flow<Boolean>
     suspend fun createEvent(event: CalendarEvent): Result<Unit>
+    suspend fun deleteEvent(eventId: String): Result<Unit>
 }
 
 sealed interface EventCalendarSyncState {

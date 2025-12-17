@@ -1,5 +1,6 @@
 package com.rampu.erasmapp.eventCalendar.ui
 
+import android.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rampu.erasmapp.eventCalendar.data.EventCalendarRepository
@@ -28,6 +29,7 @@ data class EventCalendarUiState(
     val newLocation: String = "",
     val newDescription: String = "",
     val transientMessage: String? = null,
+    val selectedEvent: CalendarEvent? = null,
 )
 
 class EventCalendarViewModel(
@@ -158,6 +160,31 @@ class EventCalendarViewModel(
                         isSaving = false,
                         transientMessage = result.exceptionOrNull()?.localizedMessage
                             ?: "Unable to save event. Try again."
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteSelectedEvent(eventId: String) {
+        if(eventId == ""){
+            return;
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            val result = repository.deleteEvent(eventId)
+            _uiState.update {
+                if (result.isSuccess) {
+                    it.copy(
+                        selectedEvent = null,
+                        isSaving = false,
+                        transientMessage = "Event deleted"
+                    )
+                } else {
+                    it.copy(
+                        isSaving = false,
+                        transientMessage = result.exceptionOrNull()?.localizedMessage
+                            ?: "Unable to delete event. Try again."
                     )
                 }
             }

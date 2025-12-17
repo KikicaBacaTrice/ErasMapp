@@ -23,9 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -70,6 +67,7 @@ fun EventCalendarScreen(
     val showDialog = uiState.showAddCalendarEventDialog
     val selectedDate = uiState.selectedDate
 
+    var deleteEventDialog by remember { mutableStateOf<CalendarEvent?>(null) }
 
     val startMonth = YearMonth.now().minusMonths(1)
     val endMonth = YearMonth.now().plusMonths(4)
@@ -160,12 +158,39 @@ fun EventCalendarScreen(
                                 )
                                 .padding(12.dp)
                         ) {
-                            Text(
-                                text = event.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
-                            )
+                            ) {
+                                Text(
+                                    text = event.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Normal,
+                                )
+                                if(uiState.isAdmin){
+                                    TextButton(
+                                        onClick = { deleteEventDialog = event },
+                                        enabled = !uiState.isSaving,
+                                        modifier = Modifier
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                            .background(
+                                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
+                                                shape = RoundedCornerShape(6.dp)
+                                            )
+                                    ) {
+                                        Text(
+                                            "Delete",
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                            }
+
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = event.time,
@@ -244,6 +269,33 @@ fun EventCalendarScreen(
                         label = { Text("Description") },
                         singleLine = true
                     )
+                }
+            }
+        )
+    }
+
+    deleteEventDialog?.let { event ->
+        AlertDialog(
+            onDismissRequest = { deleteEventDialog = null },
+            title = { Text("Delete event?") },
+            text = { Text("Are you sure you want to delete: ${event.title}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        deleteEventDialog = null
+                        viewModel.deleteSelectedEvent(event.id)
+                    },
+                    enabled = !uiState.isSaving
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { deleteEventDialog = null },
+                    enabled = !uiState.isSaving
+                ) {
+                    Text("Cancel")
                 }
             }
         )
