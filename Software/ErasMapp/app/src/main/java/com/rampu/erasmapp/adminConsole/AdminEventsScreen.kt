@@ -132,12 +132,21 @@ fun AdminEventsScreen(
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
                                     )
-                                    TextButton(
-                                        onClick = { deleteEventDialog = event },
-                                        enabled = uiState.isAdmin && !uiState.isSaving
-                                    ) {
-                                        Text("Delete")
+                                    Row() {
+                                        TextButton(
+                                            onClick = { viewModel.selectEvent(event) },
+                                            enabled = uiState.isAdmin && !uiState.isSaving
+                                        ) {
+                                            Text("Edit")
+                                        }
+                                        TextButton(
+                                            onClick = { deleteEventDialog = event },
+                                            enabled = uiState.isAdmin && !uiState.isSaving
+                                        ) {
+                                            Text("Delete")
+                                        }
                                     }
+
                                 }
                                 Text(
                                     text = "${event.date.format(dateFormatter)} at ${event.time}",
@@ -216,6 +225,67 @@ fun AdminEventsScreen(
                     OutlinedTextField(
                         value = uiState.newDescription,
                         onValueChange = viewModel::updateNewDescription,
+                        label = { Text("Description") },
+                        singleLine = true
+                    )
+                }
+            }
+        )
+    }
+
+    if (uiState.showEditCalendarEventDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissEditDialog() },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.saveEditedEvent() },
+                    enabled = !uiState.isSaving
+                ) {
+                    Text(if (uiState.isSaving) "Saving..." else "Save")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.dismissEditDialog() },
+                    enabled = !uiState.isSaving
+                ) { Text("Cancel") }
+            },
+            title = { Text("Update Event") },
+            text = {
+                val addDialogScroll = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(addDialogScroll),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = uiState.editTitle,
+                        onValueChange = viewModel::updateEditTitle,
+                        label = { Text("Title") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.editDateText,
+                        onValueChange = viewModel::updateEditDateText,
+                        label = { Text("Date (YYYY-MM-DD)") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.editTime,
+                        onValueChange = viewModel::updateEditTime,
+                        label = { Text("Time") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.editLocation,
+                        onValueChange = viewModel::updateEditLocation,
+                        label = { Text("Location") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = uiState.editDescription,
+                        onValueChange = viewModel::updateEditDescription,
                         label = { Text("Description") },
                         singleLine = true
                     )
