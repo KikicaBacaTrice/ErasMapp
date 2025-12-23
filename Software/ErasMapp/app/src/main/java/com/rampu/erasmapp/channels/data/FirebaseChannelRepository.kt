@@ -9,6 +9,7 @@ import com.rampu.erasmapp.channels.domian.Channel
 import com.rampu.erasmapp.channels.domian.ChannelSyncState
 import com.rampu.erasmapp.channels.domian.IChannelRepository
 import com.rampu.erasmapp.channels.domian.Question
+import com.rampu.erasmapp.channels.domian.QuestionDetailSyncState
 import com.rampu.erasmapp.channels.domian.QuestionsSyncState
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -20,7 +21,7 @@ class FirebaseChannelRepository(
     private val firestore: FirebaseFirestore
 ) : IChannelRepository {
     override fun observeChannels(): Flow<ChannelSyncState> = callbackFlow {
-        var registration: ListenerRegistration? = null;
+        var registration: ListenerRegistration? = null
         val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
             registration?.remove()
             val currentUser = firebaseAuth.currentUser
@@ -34,19 +35,19 @@ class FirebaseChannelRepository(
                 .orderBy("title", Query.Direction.ASCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        trySend(ChannelSyncState.Error(message = "Unable to load channels."));
+                        trySend(ChannelSyncState.Error(message = "Unable to load channels."))
                         return@addSnapshotListener
                     }
 
-                    val channels = snapshot?.documents?.mapNotNull { it.toChannel() }.orEmpty();
+                    val channels = snapshot?.documents?.mapNotNull { it.toChannel() }.orEmpty()
                     trySend(ChannelSyncState.Success(channels))
                 }
         }
 
-        auth.addAuthStateListener(authListener);
+        auth.addAuthStateListener(authListener)
         awaitClose {
             registration?.remove()
-            auth.removeAuthStateListener(authListener);
+            auth.removeAuthStateListener(authListener)
         }
     }
 
@@ -75,7 +76,45 @@ class FirebaseChannelRepository(
                     }
         }
 
-        auth.addAuthStateListener(authListener);
+        auth.addAuthStateListener(authListener)
+        awaitClose {
+            registration?.remove()
+            auth.removeAuthStateListener(authListener)
+        }
+    }
+
+    override fun observeSingleQuestion(
+        channelId: String,
+        questionId: String
+    ): Flow<QuestionDetailSyncState> = callbackFlow {
+        var registration: ListenerRegistration? = null
+        val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            registration?.remove()
+            val currentUser = firebaseAuth.currentUser
+            if (currentUser == null) {
+                trySend(QuestionDetailSyncState.SignedOut)
+                return@AuthStateListener
+            }
+
+            trySend(QuestionDetailSyncState.Loading)
+            registration = firestore.questionsFS(channelId).document(questionId)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(QuestionDetailSyncState.Error("Unable to load data for selected question"))
+                        return@addSnapshotListener
+                    }
+
+                    val question = snapshot?.toQuestion(channelId)
+                    if (question == null) {
+                        trySend(QuestionDetailSyncState.Error("Question not found"))
+                        return@addSnapshotListener
+                    }
+
+                    trySend(QuestionDetailSyncState.Success(question))
+                }
+        }
+
+        auth.addAuthStateListener(authListener)
         awaitClose {
             registration?.remove()
             auth.removeAuthStateListener(authListener)
@@ -126,7 +165,7 @@ class FirebaseChannelRepository(
         description: String?
     ): Result<Unit> = runCatching {
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
-        val channelId = firestore.channelFS().document().id;
+        val channelId = firestore.channelFS().document().id
         val data = mapOf(
             "id" to channelId,
             "title" to title,
@@ -146,7 +185,7 @@ class FirebaseChannelRepository(
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
         val questionId = firestore.questionsFS(channelId).document().id
         val createdAt = System.currentTimeMillis()
-        val authorLabel = emailPrefix(user.email);
+        val authorLabel = emailPrefix(user.email)
         val data = mapOf(
             "id" to questionId,
             "channelId" to channelId,

@@ -33,6 +33,7 @@ import com.rampu.erasmapp.channels.ui.channels.ChannelsScreen
 import com.rampu.erasmapp.channels.ui.channels.ChannelsViewModel
 import com.rampu.erasmapp.channels.ui.questions.QuestionsScreen
 import com.rampu.erasmapp.channels.ui.questions.QuestionsViewModel
+import com.rampu.erasmapp.channels.ui.threads.ThreadScreen
 import com.rampu.erasmapp.eventCalendar.ui.EventCalendarScreen
 import com.rampu.erasmapp.schedule.ui.ScheduleScreen
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
@@ -166,8 +167,23 @@ fun MainGraph(
                         channelId = channelId,
                         channelTitle = channelTitle,
                         onBack = { navController.popBackStack() },
+                        onOpenQuestion = { questionId ->
+                            navController.navigate(
+                                ThreadRoute(channelId, channelTitle, questionId)
+                            )
+                        },
                         onEvent = vm::onEvent,
                         state = state.value
+                    )
+                }
+
+                composable<ThreadRoute> { backstackEntry ->
+                    val route = backstackEntry.toRoute<ThreadRoute>()
+                    ThreadScreen(
+                        channelId = route.channelId,
+                        channelTitle = route.channelTitle,
+                        questionId = route.questionId,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
@@ -176,6 +192,7 @@ fun MainGraph(
     }
 
 }
+
 private data class BottomNavItem(
     val label: String,
     val icon: ImageVector,

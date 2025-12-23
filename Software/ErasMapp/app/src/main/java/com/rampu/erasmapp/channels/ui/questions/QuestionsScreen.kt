@@ -1,5 +1,6 @@
 package com.rampu.erasmapp.channels.ui.questions
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ fun QuestionsScreen(
     channelId: String,
     channelTitle: String,
     onBack: () -> Unit,
+    onOpenQuestion: (String) -> Unit,
     onEvent: (event: QuestionsEvent) -> Unit,
     state: QuestionsUiState
 ) {
@@ -92,7 +94,9 @@ fun QuestionsScreen(
                 ) {
                     items(state.questions, key = { it.id }) { question ->
                         Card(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable{onOpenQuestion(question.id)}
                         ) {
                             Column() {
                                 Text(question.title)
