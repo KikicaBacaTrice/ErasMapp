@@ -1,4 +1,4 @@
-package com.rampu.erasmapp.channels.ui
+package com.rampu.erasmapp.channels.ui.channels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,10 +15,10 @@ class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
     private var observeJob: Job? = null;
 
     init {
-        observerChannels()
+        observeChannels()
     }
 
-    private fun observerChannels() {
+    private fun observeChannels() {
         observeJob?.cancel()
         observeJob = viewModelScope.launch {
             repo.observeChannels().collect { state ->
@@ -65,14 +65,14 @@ class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
             is ChannelEvent.TopicChanged -> uiState.update { it.copy(newTopic = event.v) }
             is ChannelEvent.DescriptionChanged -> uiState.update { it.copy(newDescription = event.v) }
             is ChannelEvent.CreateChannel -> {
-                createChennel()
+                createChannel()
                 uiState.update { it.copy(showCreateDialog = false)}
                 }
             is ChannelEvent.ShowCreateDialog -> uiState.update { it.copy(showCreateDialog = event.show) }
         }
     }
 
-    private fun createChennel() {
+    private fun createChannel() {
         viewModelScope.launch {
             val result = repo.createChannel(
                 title = uiState.value.newTitle,

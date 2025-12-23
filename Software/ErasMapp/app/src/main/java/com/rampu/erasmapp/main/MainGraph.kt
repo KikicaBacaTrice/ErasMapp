@@ -20,37 +20,42 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.rampu.erasmapp.adminConsole.AdminConsoleScreen
 import com.rampu.erasmapp.adminConsole.AdminEventsScreen
 import com.rampu.erasmapp.adminConsole.AdminNewsScreen
 import com.rampu.erasmapp.adminConsole.AdminRoomsScreen
-import com.rampu.erasmapp.channels.ui.ChannelsScreen
-import com.rampu.erasmapp.channels.ui.ChannelsViewModel
+import com.rampu.erasmapp.channels.ui.channels.ChannelsScreen
+import com.rampu.erasmapp.channels.ui.channels.ChannelsViewModel
+import com.rampu.erasmapp.channels.ui.questions.QuestionsScreen
+import com.rampu.erasmapp.channels.ui.questions.QuestionsViewModel
 import com.rampu.erasmapp.eventCalendar.ui.EventCalendarScreen
 import com.rampu.erasmapp.schedule.ui.ScheduleScreen
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun MainGraph(
     onSignOut: () -> Unit
 
-){
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    //val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomItems = listOf(
-        BottomNavItem("Home", Icons.Filled.Home, HomeRoute),
-        BottomNavItem("Schedule", Icons.Filled.DateRange, ScheduleRoute),
-        BottomNavItem("Map", Icons.Filled.Place, MapRoute),
-        BottomNavItem("Profile", Icons.Filled.Person, ProfileRoute)
-    )
+    val currentRoute = navController.currentBackStackEntryAsState()
+
+//    val bottomItems = listOf(
+//        BottomNavItem("Home", Icons.Filled.Home, HomeRoute),
+//        BottomNavItem("Schedule", Icons.Filled.DateRange, ScheduleRoute),
+//        BottomNavItem("Map", Icons.Filled.Place, MapRoute),
+//        BottomNavItem("Profile", Icons.Filled.Person, ProfileRoute)
+//    )
 
     ErasMappTheme {
         Scaffold(
@@ -82,14 +87,14 @@ fun MainGraph(
                         end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
                         bottom = 80.dp
                     )
-            ){
+            ) {
                 composable<HomeRoute> {
                     HomeScreen(
                         onSignOut = onSignOut,
                         onGoToSchedule = { navController.navigate(ScheduleRoute) },
                         onGoToEventCalendar = { navController.navigate(EventCalendarRoute) },
                         onGoToAdmin = { navController.navigate(AdminRoute) },
-                        onGoToChannels = {navController.navigate(ChannelsRoute)}
+                        onGoToChannels = { navController.navigate(ChannelsRoute) }
                     )
                 }
                 composable<ScheduleRoute> {
@@ -111,7 +116,7 @@ fun MainGraph(
                     AdminConsoleScreen(
                         onManageEvents = { navController.navigate(AdminEventsRoute) },
                         onManageRooms = { navController.navigate(AdminRoomsRoute) },
-                        onManageNews = {navController.navigate(AdminNewsRoute) }
+                        onManageNews = { navController.navigate(AdminNewsRoute) }
                     )
                 }
                 composable<AdminEventsRoute> {
@@ -130,12 +135,37 @@ fun MainGraph(
                     )
                 }
 
-                composable<ChannelsRoute>{
+                composable<ChannelsRoute> {
                     val vm: ChannelsViewModel = koinViewModel()
                     val state = vm.uiState.collectAsStateWithLifecycle()
 
                     ChannelsScreen(
-                        onBack = {navController.popBackStack()},
+                        onBack = { navController.popBackStack() },
+                        onEvent = vm::onEvent,
+                        state = state.value,
+                        onChannelSelected = { id, title ->
+                            navController.navigate(
+                                QuestionsRoute(
+                                    id,
+                                    title
+                                )
+                            )
+                        }
+                    )
+                }
+
+                composable<QuestionsRoute> { backstackEntry ->
+                    val route = backstackEntry.toRoute<QuestionsRoute>()
+                    val channelId = route.channelId
+                    val channelTitle = route.channelTitle
+                    val vm: QuestionsViewModel =
+                        koinViewModel(parameters = { parametersOf(channelId, channelTitle) })
+                    val state = vm.uiState.collectAsStateWithLifecycle()
+
+                    QuestionsScreen(
+                        channelId = channelId,
+                        channelTitle = channelTitle,
+                        onBack = { navController.popBackStack() },
                         onEvent = vm::onEvent,
                         state = state.value
                     )
@@ -145,9 +175,7 @@ fun MainGraph(
         }
     }
 
-
 }
-
 private data class BottomNavItem(
     val label: String,
     val icon: ImageVector,
@@ -164,7 +192,7 @@ private fun MainBottomBar(
         items.forEach { item ->
             val simpleName = item.route::class.simpleName
             val isSelected = currentRoute == item.route::class.qualifiedName ||
-                (simpleName != null && currentRoute?.endsWith(simpleName) == true)
+                    (simpleName != null && currentRoute?.endsWith(simpleName) == true)
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onNavigate(item.route) },

@@ -1,4 +1,4 @@
-package com.rampu.erasmapp.channels.ui
+package com.rampu.erasmapp.channels.ui.channels
 
 import com.rampu.erasmapp.channels.domian.Channel
 

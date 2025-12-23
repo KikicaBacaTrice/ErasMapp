@@ -1,4 +1,4 @@
-package com.rampu.erasmapp.channels.ui
+package com.rampu.erasmapp.channels.ui.channels
 
 sealed interface ChannelEvent {
     data class TitleChanged(val v: String) : ChannelEvent
