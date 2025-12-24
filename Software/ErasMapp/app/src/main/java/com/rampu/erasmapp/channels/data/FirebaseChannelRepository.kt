@@ -214,7 +214,8 @@ class FirebaseChannelRepository(
             title = title,
             topic = topic,
             description = description,
-            createdBy = createdBy
+            createdBy = createdBy,
+            iconKey = null //TODO: make this work with Firestore
         )
     }
 
