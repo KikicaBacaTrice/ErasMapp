@@ -188,7 +188,9 @@ fun ChannelScreenPreview() {
                     topic = "Preview topic",
                     description = "Preview Description",
                     createdBy = "Created by HERE",
-                    iconKey = null
+                    iconKey = null,
+                    lastActivityAt = System.currentTimeMillis(),
+                    unreadCount = 5,
                 )
             )
         )

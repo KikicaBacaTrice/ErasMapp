@@ -2,6 +2,7 @@ package com.rampu.erasmapp.channels.ui.channels
 
 import android.graphics.Paint
 import android.text.Layout
+import android.text.format.DateUtils
 import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -65,7 +66,9 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
             }
         }
         Spacer(Modifier.width(12.dp))
-        Column() {
+        Column(
+            Modifier.weight(1f)
+        ) {
             Text(
                 text = channel.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -78,9 +81,20 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            else{
+                Text(
+                    text = channel.topic,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
-
-
+        Spacer(Modifier.width(12.dp))
+        ChannelMeta(
+            lastActivityAt = channel.lastActivityAt,
+            unreadCount = channel.unreadCount,
+        )
     }
 }
 
@@ -112,7 +126,9 @@ fun ChannelItemPreview() {
                 topic = "Events",
                 description = "Meetups, hangouts, and social activities for Erasmus students.",
                 createdBy = "lkanjir23",
-                iconKey = null
+                iconKey = null,
+                lastActivityAt = System.currentTimeMillis() - 2* DateUtils.DAY_IN_MILLIS,
+                unreadCount = 5,
             ),
             onClick = {}
         )
@@ -131,7 +147,9 @@ fun ChannelItemPreview2() {
                 topic = "Events",
                 description = "Meetups, hangouts, and social activities for Erasmus students.",
                 createdBy = "lkanjir23",
-                iconKey = "general"
+                iconKey = "general",
+                lastActivityAt = System.currentTimeMillis(),
+                unreadCount = 100,
             ),
             onClick = {}
         )

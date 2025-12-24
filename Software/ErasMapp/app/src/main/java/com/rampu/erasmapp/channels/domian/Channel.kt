@@ -6,5 +6,9 @@ data class Channel(
     val topic: String,
     val description: String?,
     val createdBy: String?,
-    val iconKey: String?  //TODO: make this work with Firestore
+
+    //TODO: make this work with Firestore
+    val iconKey: String?,
+    val lastActivityAt: Long?,
+    val unreadCount: Int
 )

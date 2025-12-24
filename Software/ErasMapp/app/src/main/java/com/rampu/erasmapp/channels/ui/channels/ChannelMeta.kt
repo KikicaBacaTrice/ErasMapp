@@ -1,0 +1,127 @@
+package com.rampu.erasmapp.channels.ui.channels
+
+import android.icu.text.DateFormat
+import android.icu.util.Calendar
+import android.text.format.DateUtils
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.ui.theme.ErasMappTheme
+
+@Composable
+fun ChannelMeta(lastActivityAt: Long?, unreadCount: Int, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = formatTime(lastActivityAt),
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        if (unreadCount > 0) {
+            Spacer(Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .padding(5.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = unreadCount.toString(),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+    }
+}
+
+private fun formatTime(lastActivityAt: Long?): String {
+    if (lastActivityAt == null) return "New"
+
+    val now = System.currentTimeMillis()
+    val cal = Calendar.getInstance().apply {
+        timeInMillis = now
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    val startOfToday = cal.timeInMillis
+    val startOfYesterday = startOfToday - DateUtils.DAY_IN_MILLIS
+
+    return when {
+        lastActivityAt >= startOfToday -> DateUtils.formatDateTime(
+            null,
+            lastActivityAt,
+            DateUtils.FORMAT_SHOW_TIME
+        )
+
+        lastActivityAt >= startOfYesterday -> "Yesterday"
+        else -> DateUtils.formatDateTime(
+            null,
+            lastActivityAt,
+            DateUtils.FORMAT_NUMERIC_DATE or DateUtils.FORMAT_NUMERIC_DATE
+        )
+    }
+}
+
+@Composable
+@Preview(widthDp = 100, heightDp = 100, showBackground = true)
+fun ChannelMetaPreviewNull() {
+    ErasMappTheme() {
+        ChannelMeta(
+            unreadCount = 10,
+            lastActivityAt = null
+        )
+    }
+}
+
+@Composable
+@Preview(widthDp = 100, heightDp = 100, showBackground = true)
+fun ChannelMetaPreviewToday() {
+    ErasMappTheme() {
+        ChannelMeta(
+            unreadCount = 10,
+            lastActivityAt = System.currentTimeMillis()
+        )
+    }
+}
+
+@Composable
+@Preview(widthDp = 100, heightDp = 100, showBackground = true)
+fun ChannelMetaPreviewYesterday() {
+    ErasMappTheme() {
+        ChannelMeta(
+            unreadCount = 10,
+            lastActivityAt = System.currentTimeMillis() - DateUtils.DAY_IN_MILLIS
+        )
+    }
+}
+
+@Composable
+@Preview(widthDp = 100, heightDp = 100, showBackground = true)
+fun ChannelMetaPreviewOlder() {
+    ErasMappTheme() {
+        ChannelMeta(
+            unreadCount = 10,
+            lastActivityAt = System.currentTimeMillis() - 3 * DateUtils.DAY_IN_MILLIS
+        )
+    }
+}
