@@ -5,6 +5,8 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.rampu.erasmapp.channels.domian.Answer
+import com.rampu.erasmapp.channels.domian.AnswerSyncState
 import com.rampu.erasmapp.channels.domian.Channel
 import com.rampu.erasmapp.channels.domian.ChannelSyncState
 import com.rampu.erasmapp.channels.domian.IChannelRepository
@@ -121,6 +123,63 @@ class FirebaseChannelRepository(
         }
     }
 
+    override fun observeAnswers(
+        channelId: String,
+        questionId: String
+    ): Flow<AnswerSyncState> = callbackFlow {
+        var registration: ListenerRegistration? = null
+        val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            registration?.remove()
+            val currentUser = firebaseAuth.currentUser
+            if (currentUser == null) {
+                trySend(AnswerSyncState.SignedOut)
+                return@AuthStateListener
+            }
+
+            trySend(AnswerSyncState.Loading)
+            registration = firestore.answersFS(channelId, questionId)
+                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(AnswerSyncState.Error(message = "Unable to load answers for selected question"))
+                        return@addSnapshotListener
+                    }
+
+                    val answers =
+                        snapshot?.documents?.mapNotNull { it.toAnswer(channelId, questionId) }
+                            .orEmpty()
+                    trySend(AnswerSyncState.Success(answers))
+                }
+        }
+
+        auth.addAuthStateListener(authListener)
+        awaitClose {
+            registration?.remove()
+            auth.removeAuthStateListener(authListener)
+        }
+    }
+
+    private fun DocumentSnapshot.toAnswer(channelId: String, questionId: String): Answer? {
+        val id = getString("id") ?: return null
+        val body = getString("body") ?: return null
+        val authorId = getString("authorId") ?: ""
+        val authorLabel = getString("authorLabel") ?: authorId
+        val createdAt = getLong("createdAt") ?: 0L
+
+        return Answer(
+            id = id,
+            channelId = channelId,
+            questionId = questionId,
+            body = body,
+            authorId = authorId,
+            authorLabel = authorLabel,
+            createdAt = createdAt
+        )
+    }
+
+    private fun FirebaseFirestore.answersFS(channelId: String, questionId: String) =
+        questionsFS(channelId).document(questionId).collection("answers")
+
     private fun DocumentSnapshot.toQuestion(channelId: String): Question? {
         val id = getString("id") ?: return null
         val title = getString("title") ?: return null
@@ -197,6 +256,30 @@ class FirebaseChannelRepository(
         )
 
         firestore.questionsFS(channelId).document(questionId).set(data).await()
+    }
+
+    //TODO: need to change when i add post registration flow
+    override suspend fun createAnswer(
+        channelId: String,
+        questionId: String,
+        body: String
+    ): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
+        val answerId = firestore.answersFS(channelId, questionId).document().id
+        val createdAt = System.currentTimeMillis()
+        val authorLabel = emailPrefix(user.email)
+
+        val data = mapOf(
+            "id" to answerId,
+            "channelId" to channelId,
+            "questionId" to questionId,
+            "body" to body,
+            "authorId" to user.uid,
+            "authorLabel" to authorLabel,
+            "createdAt" to createdAt
+        )
+
+        firestore.answersFS(channelId, questionId).document(answerId).set(data).await()
     }
 
     //TODO: need to change when i add post registration flow

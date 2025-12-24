@@ -6,6 +6,7 @@ interface IChannelRepository {
     fun observeChannels(): Flow<ChannelSyncState>
     fun observeQuestions(channelId: String): Flow<QuestionsSyncState>
     fun observeSingleQuestion(channelId: String, questionId: String): Flow<QuestionDetailSyncState>
+    fun observeAnswers(channelId: String, questionId: String): Flow<AnswerSyncState>
     suspend fun createChannel(
         title: String,
         topic: String,
@@ -17,6 +18,12 @@ interface IChannelRepository {
         title: String,
         body: String
     ): Result<Unit>
+
+    suspend fun createAnswer(
+        channelId: String,
+        questionId: String,
+        body: String
+    ) : Result<Unit>
 }
 
 sealed interface ChannelSyncState {
@@ -37,5 +44,12 @@ sealed interface QuestionDetailSyncState {
     data object Loading : QuestionDetailSyncState
     data class Success(val question: Question) : QuestionDetailSyncState
     data class Error(val message: String) : QuestionDetailSyncState
-    data object SignedOut: QuestionDetailSyncState
+    data object SignedOut : QuestionDetailSyncState
+}
+
+sealed interface AnswerSyncState {
+    data object Loading : AnswerSyncState
+    data class Success(val answers: List<Answer>) : AnswerSyncState
+    data class Error(val message: String) : AnswerSyncState
+    data object SignedOut : AnswerSyncState
 }
