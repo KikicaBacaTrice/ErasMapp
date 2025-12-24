@@ -34,6 +34,7 @@ import com.rampu.erasmapp.channels.ui.channels.ChannelsViewModel
 import com.rampu.erasmapp.channels.ui.questions.QuestionsScreen
 import com.rampu.erasmapp.channels.ui.questions.QuestionsViewModel
 import com.rampu.erasmapp.channels.ui.threads.ThreadScreen
+import com.rampu.erasmapp.channels.ui.threads.ThreadViewModel
 import com.rampu.erasmapp.eventCalendar.ui.EventCalendarScreen
 import com.rampu.erasmapp.schedule.ui.ScheduleScreen
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
@@ -179,11 +180,19 @@ fun MainGraph(
 
                 composable<ThreadRoute> { backstackEntry ->
                     val route = backstackEntry.toRoute<ThreadRoute>()
+                    val channelId = route.channelId
+                    val channelTitle = route.channelTitle
+                    val questionId = route.questionId
+                    val vm: ThreadViewModel = koinViewModel(parameters = {parametersOf(channelId,channelTitle,questionId)})
+                    val state = vm.uiState.collectAsStateWithLifecycle()
+
                     ThreadScreen(
-                        channelId = route.channelId,
-                        channelTitle = route.channelTitle,
-                        questionId = route.questionId,
-                        onBack = { navController.popBackStack() }
+                        //channelId = channelId,
+                        //channelTitle = channelTitle,
+                        //questionId = questionId,
+                        onBack = { navController.popBackStack() },
+                        onEvent = vm::onEvent,
+                        state = state.value
                     )
                 }
 
