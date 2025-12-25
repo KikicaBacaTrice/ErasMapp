@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.channels.domian.Question
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
@@ -130,8 +131,18 @@ fun QuestionScreenPreview(){
             onOpenQuestion = {},
             onEvent = {},
             state = QuestionsUiState(
+                isLoading = false,
                 channelId = "asdf",
-                channelTitle = "Activities"
+                channelTitle = "Activities",
+                questions = listOf(Question(
+                    id = "test",
+                    channelId = "test",
+                    title = "This is the question title",
+                    body = "This is the question body",
+                    authorId = "authorId",
+                    authorLabel = "Author Label",
+                    createdAt = System.currentTimeMillis()
+                ))
             )
         )
     }

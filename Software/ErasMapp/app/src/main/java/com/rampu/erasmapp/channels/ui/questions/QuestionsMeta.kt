@@ -1,4 +1,4 @@
-package com.rampu.erasmapp.channels.ui.channels
+package com.rampu.erasmapp.channels.ui.questions
 
 import android.content.Context
 import android.icu.util.Calendar
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
-fun ChannelMeta(lastActivityAt: Long?, unreadCount: Int, modifier: Modifier = Modifier) {
+fun QuestionsMeta(lastActivityAt: Long?, unreadCount: Int, modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     Column(
@@ -86,9 +86,9 @@ private fun formatTime(context: Context, lastActivityAt: Long?): String {
 
 @Composable
 @Preview(widthDp = 100, heightDp = 100, showBackground = true)
-fun ChannelMetaPreviewNull() {
+fun QuestionsMetaPreviewNull() {
     ErasMappTheme {
-        ChannelMeta(
+        QuestionsMeta(
             unreadCount = 10,
             lastActivityAt = null
         )
@@ -97,9 +97,9 @@ fun ChannelMetaPreviewNull() {
 
 @Composable
 @Preview(widthDp = 100, heightDp = 100, showBackground = true)
-fun ChannelMetaPreviewToday() {
+fun QuestionsMetaPreviewToday() {
     ErasMappTheme {
-        ChannelMeta(
+        QuestionsMeta(
             unreadCount = 10,
             lastActivityAt = System.currentTimeMillis()
         )
@@ -108,9 +108,9 @@ fun ChannelMetaPreviewToday() {
 
 @Composable
 @Preview(widthDp = 100, heightDp = 100, showBackground = true)
-fun ChannelMetaPreviewYesterday() {
+fun QuestionsMetaPreviewYesterday() {
     ErasMappTheme {
-        ChannelMeta(
+        QuestionsMeta(
             unreadCount = 10,
             lastActivityAt = System.currentTimeMillis() - DateUtils.DAY_IN_MILLIS
         )
@@ -119,9 +119,9 @@ fun ChannelMetaPreviewYesterday() {
 
 @Composable
 @Preview(widthDp = 100, heightDp = 100, showBackground = true)
-fun ChannelMetaPreviewOlder() {
+fun QuestionsMetaPreviewOlder() {
     ErasMappTheme {
-        ChannelMeta(
+        QuestionsMeta(
             unreadCount = 500,
             lastActivityAt = System.currentTimeMillis() - 3 * DateUtils.DAY_IN_MILLIS
         )

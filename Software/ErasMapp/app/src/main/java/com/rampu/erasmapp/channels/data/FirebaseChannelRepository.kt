@@ -13,6 +13,7 @@ import com.rampu.erasmapp.channels.domian.IChannelRepository
 import com.rampu.erasmapp.channels.domian.Question
 import com.rampu.erasmapp.channels.domian.QuestionDetailSyncState
 import com.rampu.erasmapp.channels.domian.QuestionsSyncState
+import com.rampu.erasmapp.common.util.emailPrefix
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -284,11 +285,5 @@ class FirebaseChannelRepository(
         firestore.answersFS(channelId, questionId).document(answerId).set(data).await()
     }
 
-    //TODO: need to change when i add post registration flow
-    private fun emailPrefix(email: String?): String =
-        if (email.isNullOrBlank()) "unknown"
-        else email.substringBefore("@")
-
     private fun FirebaseFirestore.channelFS() = collection("channels")
-
 }
