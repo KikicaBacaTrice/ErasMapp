@@ -5,6 +5,7 @@ package com.rampu.erasmapp.channels.ui.channels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -133,7 +137,8 @@ fun ChannelsScreen(
                 Spacer(Modifier.height(10.dp))
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(16.dp)
                 ) {
                     items(state.channels, key = { it.id }) { channel ->
                         ChannelItem(
@@ -162,11 +167,9 @@ fun ChannelScreenPreview() {
                         id = "asdf",
                         title = "Preview title",
                         topic = "Preview topic",
-                        description = "Preview Description",
+                        description = "Preview Description Preview Description Preview Description Preview Description Preview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview DescriptionPreview Description",
                         createdBy = "Created by HERE",
                         iconKey = null,
-                        lastActivityAt = System.currentTimeMillis(),
-                        unreadCount = 5,
                     ),
                     Channel(
                         id = "asdfdsafadsf",
@@ -175,8 +178,6 @@ fun ChannelScreenPreview() {
                         description = "Preview Description",
                         createdBy = "Created by HERE",
                         iconKey = null,
-                        lastActivityAt = System.currentTimeMillis(),
-                        unreadCount = 5,
                     ),
                     Channel(
                         id = "afdsafsa",
@@ -185,8 +186,6 @@ fun ChannelScreenPreview() {
                         description = "Preview Description",
                         createdBy = "Created by HERE",
                         iconKey = null,
-                        lastActivityAt = System.currentTimeMillis(),
-                        unreadCount = 5,
                     ),
                     Channel(
                         id = "asdfe",
@@ -195,8 +194,6 @@ fun ChannelScreenPreview() {
                         description = "Preview Description",
                         createdBy = "Created by HERE",
                         iconKey = null,
-                        lastActivityAt = System.currentTimeMillis(),
-                        unreadCount = 100,
                     )
                 )
             )

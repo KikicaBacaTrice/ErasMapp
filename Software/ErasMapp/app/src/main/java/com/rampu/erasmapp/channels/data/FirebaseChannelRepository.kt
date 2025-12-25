@@ -217,8 +217,6 @@ class FirebaseChannelRepository(
             createdBy = createdBy,
             //TODO: make this work with Firestore
             iconKey = null,
-            lastActivityAt = System.currentTimeMillis(),
-            unreadCount = 5,
         )
     }
 

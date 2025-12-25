@@ -15,11 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.rampu.erasmapp.channels.domian.Question
-import com.rampu.erasmapp.channels.ui.channels.ChannelEvent
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
+import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
 fun QuestionsScreen(
@@ -98,7 +98,7 @@ fun QuestionsScreen(
                                 .fillMaxWidth()
                                 .clickable{onOpenQuestion(question.id)}
                         ) {
-                            Column() {
+                            Column {
                                 Text(question.title)
                                 Text(question.body)
                             }
@@ -117,6 +117,22 @@ fun QuestionsScreen(
             }
         }
     }
+}
 
-
+@Preview(showBackground = true)
+@Composable
+fun QuestionScreenPreview(){
+    ErasMappTheme {
+        QuestionsScreen(
+            channelId = "asdf",
+            channelTitle = "Activites",
+            onBack = {},
+            onOpenQuestion = {},
+            onEvent = {},
+            state = QuestionsUiState(
+                channelId = "asdf",
+                channelTitle = "Activities"
+            )
+        )
+    }
 }

@@ -9,6 +9,4 @@ data class Channel(
 
     //TODO: make this work with Firestore
     val iconKey: String?,
-    val lastActivityAt: Long?,
-    val unreadCount: Int
 )

@@ -6,14 +6,20 @@ import android.text.format.DateUtils
 import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,9 +31,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.android.material.textview.MaterialTextView
 import com.rampu.erasmapp.R
 import com.rampu.erasmapp.channels.domian.Channel
@@ -38,11 +46,15 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
     val icon = iconForKey(channel.iconKey)
     val letter = channel.title.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
 
-    Row(
+    Column(
         modifier = Modifier
-            .fillMaxSize()
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth()
+            .height(160.dp)
+            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
@@ -65,36 +77,41 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.height(12.dp))
         Column(
-            Modifier.weight(1f)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = channel.title,
                 style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center
             )
-            if(!channel.description.isNullOrBlank()){
+            Box(
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).padding(horizontal = 5.dp)
+            ){
                 Text(
-                    text = channel.description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = channel.topic,
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Light, fontSize = 10.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            else{
+            if (!channel.description.isNullOrBlank()) {
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    text = channel.topic,
+                    text = channel.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
                 )
             }
         }
         Spacer(Modifier.width(6.dp))
-        ChannelMeta(
-            lastActivityAt = channel.lastActivityAt,
-            unreadCount = channel.unreadCount,
-        )
+//        ChannelMeta(
+//            lastActivityAt = channel.lastActivityAt,
+//            unreadCount = channel.unreadCount,
+//        )
     }
 }
 
@@ -115,7 +132,7 @@ private fun iconForKey(iconKey: String?): ImageVector? {
     return resiId?.let { ImageVector.vectorResource(it) }
 }
 
-@Preview(heightDp = 100, showBackground = true)
+@Preview(heightDp = 200, showBackground = true)
 @Composable
 fun ChannelItemPreview() {
     ErasMappTheme() {
@@ -127,8 +144,6 @@ fun ChannelItemPreview() {
                 description = "Meetups, hangouts, and social activities for Erasmus students.",
                 createdBy = "lkanjir23",
                 iconKey = null,
-                lastActivityAt = System.currentTimeMillis() - 2* DateUtils.DAY_IN_MILLIS,
-                unreadCount = 5,
             ),
             onClick = {}
         )
@@ -136,7 +151,7 @@ fun ChannelItemPreview() {
 
 }
 
-@Preview(heightDp = 100, showBackground = true)
+@Preview(heightDp = 200, showBackground = true)
 @Composable
 fun ChannelItemPreview2() {
     ErasMappTheme() {
@@ -148,8 +163,6 @@ fun ChannelItemPreview2() {
                 description = "Meetups, hangouts, and social activities for Erasmus students.",
                 createdBy = "lkanjir23",
                 iconKey = "general",
-                lastActivityAt = System.currentTimeMillis(),
-                unreadCount = 100,
             ),
             onClick = {}
         )
