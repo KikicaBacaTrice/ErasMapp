@@ -13,5 +13,7 @@ data class ThreadUiState(
     val errorMsg: String? = null,
     val isSignedOut: Boolean = false,
     val isSaving: Boolean = false,
-    val newAnswer: String = ""
+    val newAnswer: String = "",
+    val currentUserId: String? = null,
+    val canSendAnswer: Boolean = false
 )

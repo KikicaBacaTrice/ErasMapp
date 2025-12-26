@@ -29,6 +29,7 @@ class ThreadViewModel(
     private var answerJob: Job? = null
 
     init {
+        uiState.update { it.copy(currentUserId = repo.currentUserId()) }
         observeQuestion()
         observeAnswers()
     }
@@ -46,15 +47,21 @@ class ThreadViewModel(
                     }
 
                     is QuestionDetailSyncState.Success -> {
+                        val question = syncState.question
                         uiState.update {
                             it.copy(
-                                question = syncState.question,
+                                question = question,
                                 isLoading = false,
                                 errorMsg = null,
                                 isSignedOut = false
                             )
                         }
-                        viewModelScope.launch { repo.updateQuestionMeta(syncState.question.id, syncState.question.answerCount) }
+                        viewModelScope.launch {
+                            repo.updateQuestionMeta(
+                                question.id,
+                                question.answerCount
+                            )
+                        }
                     }
 
                     is QuestionDetailSyncState.Error -> uiState.update {
@@ -123,39 +130,47 @@ class ThreadViewModel(
 
     fun createAnswer() {
         val question = uiState.value.question ?: return
+        val body = uiState.value.newAnswer
 
         viewModelScope.launch {
             uiState.update { it.copy(isSaving = true) }
             val result = repo.createAnswer(
                 channelId = channelId,
                 questionId = questionId,
-                body = uiState.value.newAnswer
+                body = body
             )
 
             uiState.update {
                 if (result.isSuccess) {
                     it.copy(
                         newAnswer = "",
-                        isSaving = false
+                        isSaving = false,
+                        canSendAnswer = false
                     )
                 } else {
                     it.copy(
                         isSaving = false,
-                        errorMsg = "Unable to post your answer. Try again."
+                        errorMsg = "Unable to post your answer. Try again.",
+                        canSendAnswer = false
                     )
                 }
             }
+            if (result.isSuccess) repo.updateQuestionMeta(question.id, question.answerCount + 1)
         }
     }
 
     fun onEvent(event: ThreadEvent) {
         when (event) {
-            is ThreadEvent.PostAnswer -> {
-                createAnswer()
-                uiState.update { it.copy(newAnswer = "") }
+            is ThreadEvent.PostAnswer -> createAnswer()
+            is ThreadEvent.BodyChanged -> {
+                if (!event.v.isBlank()) uiState.update {
+                    it.copy(
+                        newAnswer = event.v,
+                        canSendAnswer = true
+                    )
+                }
+                else uiState.update { it.copy(newAnswer = event.v, canSendAnswer = false) }
             }
-
-            is ThreadEvent.BodyChanged -> uiState.update { it.copy(newAnswer = event.v) }
         }
     }
 }

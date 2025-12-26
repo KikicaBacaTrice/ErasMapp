@@ -61,8 +61,8 @@ fun MainGraph(
 
     ErasMappTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            bottomBar = {
+            modifier = Modifier.fillMaxSize()
+//           bottomBar = {
 //                MainBottomBar(
 //                    items = bottomItems,
 //                    currentRoute = currentRoute,
@@ -76,19 +76,14 @@ fun MainGraph(
 //                        }
 //                    }
 //                )
-            }
+//                }
         ) { innerPadding ->
             NavHost(
                 navController = navController,
                 startDestination = HomeRoute,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
-                        top = innerPadding.calculateTopPadding(),
-                        end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
-                        bottom = 80.dp
-                    )
+                    .padding(innerPadding)
             ) {
                 composable<HomeRoute> {
                     HomeScreen(
@@ -187,9 +182,6 @@ fun MainGraph(
                     val state = vm.uiState.collectAsStateWithLifecycle()
 
                     ThreadScreen(
-                        //channelId = channelId,
-                        //channelTitle = channelTitle,
-                        //questionId = questionId,
                         onBack = { navController.popBackStack() },
                         onEvent = vm::onEvent,
                         state = state.value

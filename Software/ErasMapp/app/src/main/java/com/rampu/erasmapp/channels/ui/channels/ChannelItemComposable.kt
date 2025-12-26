@@ -37,7 +37,10 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
             .fillMaxWidth()
             .height(160.dp)
             .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+            .background(
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                RoundedCornerShape(10.dp)
+            )
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -57,11 +60,19 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
                 textAlign = TextAlign.Center
             )
             Box(
-                modifier = Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).padding(horizontal = 5.dp)
-            ){
+                modifier = Modifier
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 5.dp)
+            ) {
                 Text(
                     text = channel.topic,
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Light, fontSize = 10.sp),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Light,
+                        fontSize = 10.sp
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

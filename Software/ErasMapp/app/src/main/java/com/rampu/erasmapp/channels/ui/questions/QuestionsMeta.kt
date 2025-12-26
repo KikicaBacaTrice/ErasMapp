@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.common.util.formatTime
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
@@ -50,37 +51,6 @@ fun QuestionsMeta(lastActivityAt: Long?, unreadCount: Long, modifier: Modifier =
                 )
             }
         }
-    }
-}
-
-private fun formatTime(context: Context, lastActivityAt: Long?): String {
-    if (lastActivityAt == null) return "New"
-
-    val now = System.currentTimeMillis()
-    val cal = Calendar.getInstance().apply {
-        timeInMillis = now
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    val startOfToday = cal.timeInMillis
-    val startOfYesterday = startOfToday - DateUtils.DAY_IN_MILLIS
-
-    return when {
-        lastActivityAt >= startOfToday -> DateUtils.formatDateTime(
-            context,
-            lastActivityAt,
-            DateUtils.FORMAT_SHOW_TIME
-        )
-
-        lastActivityAt >= startOfYesterday -> "Yesterday"
-        else -> DateUtils.formatDateTime(
-            context,
-            lastActivityAt,
-            DateUtils.FORMAT_NUMERIC_DATE or DateUtils.FORMAT_NUMERIC_DATE
-        )
     }
 }
 
