@@ -1,16 +1,28 @@
 package com.rampu.erasmapp.channels.ui.questions
 
+import android.graphics.Paint
+import android.widget.Space
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -88,41 +100,43 @@ fun QuestionsScreen(
         }
 
         else -> {
-            Column(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(15.dp)
-                ) {
-                    items(state.questions, key = { it.id }) { question ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable{onOpenQuestion(question.id)}
-                        ) {
-                            Column {
-                                Text(question.title)
-                                Text(question.body)
-                            }
-
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = channelTitle,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(bottom = 72.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(state.questions, key = { it.id }) { item ->
+                            QuestionItem(item = item, onClick = { onOpenQuestion(item.id) })
                         }
                     }
-
                 }
-                Button(
-                    onClick = {
-                        onEvent(QuestionsEvent.ShowCreateDialog(show = true))
-                    }
+                FloatingActionButton(
+                    onClick = { onEvent(QuestionsEvent.ShowCreateDialog(show = true)) },
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    containerColor = MaterialTheme.colorScheme.primary
                 ) {
-                    Text("Add question")
+                    Icon(Icons.Filled.Add, contentDescription = "Add question")
                 }
             }
+
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun QuestionScreenPreview(){
+fun QuestionScreenPreview() {
     ErasMappTheme {
         QuestionsScreen(
             channelId = "asdf",
@@ -134,15 +148,17 @@ fun QuestionScreenPreview(){
                 isLoading = false,
                 channelId = "asdf",
                 channelTitle = "Activities",
-                questions = listOf(Question(
-                    id = "test",
-                    channelId = "test",
-                    title = "This is the question title",
-                    body = "This is the question body",
-                    authorId = "authorId",
-                    authorLabel = "Author Label",
-                    createdAt = System.currentTimeMillis()
-                ))
+                questions = listOf(
+                    QuestionListItem(
+                        id = "id",
+                        title = "Preview Title",
+                        bodyPreview = "Body preview",
+                        authorLabel = "Author name",
+                        authorPhotoUrl = null,
+                        lastActivityAt = System.currentTimeMillis(),
+                        unreadCount = 10
+                    )
+                )
             )
         )
     }

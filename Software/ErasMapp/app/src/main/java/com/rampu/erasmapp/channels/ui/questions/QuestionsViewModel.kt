@@ -36,7 +36,8 @@ class QuestionsViewModel(
                     }
                     is QuestionsSyncState.Success -> uiState.update {
                         it.copy(
-                            questions = syncState.questions,
+                            //TODO: Need to fix this to work with new QuestionListItem
+                            questions = emptyList(),
                             isLoading = false,
                             errorMsg = null,
                             isSignedOut = false

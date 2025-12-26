@@ -6,7 +6,7 @@ import com.rampu.erasmapp.channels.ui.channels.ChannelEvent
 data class QuestionsUiState (
     val channelId: String,
     val channelTitle: String,
-    val questions: List<Question> = emptyList(),
+    val questions: List<QuestionListItem> = emptyList(),
     val isLoading: Boolean = true,
     val errorMsg: String? = null,
     val isSignedOut: Boolean = false,
