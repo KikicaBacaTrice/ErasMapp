@@ -7,5 +7,9 @@ data class Question(
     val body: String,
     val authorId: String,
     val authorLabel: String,
-    val createdAt: Long
+    val authorPhotoUrl: String? = null,
+    val createdAt: Long,
+    val lastActivityAt: Long = createdAt,
+    val lastMessagePreview: String = "",
+    val answerCount: Long = 0L,
 )
