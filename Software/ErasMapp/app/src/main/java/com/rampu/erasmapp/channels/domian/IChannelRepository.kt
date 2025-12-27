@@ -12,7 +12,8 @@ interface IChannelRepository {
     suspend fun createChannel(
         title: String,
         topic: String,
-        description: String? = null
+        description: String? = null,
+        iconKey: String? = null
     ): Result<Unit>
 
     suspend fun createQuestion(
@@ -25,6 +26,14 @@ interface IChannelRepository {
         channelId: String,
         questionId: String,
         body: String
+    ): Result<Unit>
+
+    suspend fun acceptAnswer(channelId: String, questionId: String, answerId: String): Result<Unit>
+
+    suspend fun setQuestionStatus(
+        channelId: String,
+        questionsId: String,
+        status: QuestionsStatus
     ): Result<Unit>
 
     suspend fun updateQuestionMeta(questionId: String, lastSeenAnswerCount: Long): Result<Unit>

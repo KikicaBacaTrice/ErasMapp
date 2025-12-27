@@ -7,5 +7,6 @@ data class Answer(
     val body: String,
     val authorId: String,
     val authorLabel: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val authorPhotoUrl: String? = null
 )

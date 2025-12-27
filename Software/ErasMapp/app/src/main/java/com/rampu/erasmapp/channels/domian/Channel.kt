@@ -6,7 +6,5 @@ data class Channel(
     val topic: String,
     val description: String?,
     val createdBy: String?,
-
-    //TODO: make this work with Firestore
     val iconKey: String?,
 )

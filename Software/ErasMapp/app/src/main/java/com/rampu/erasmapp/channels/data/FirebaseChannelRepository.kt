@@ -16,6 +16,7 @@ import com.rampu.erasmapp.channels.domian.Question
 import com.rampu.erasmapp.channels.domian.QuestionDetailSyncState
 import com.rampu.erasmapp.channels.domian.QuestionMeta
 import com.rampu.erasmapp.channels.domian.QuestionMetaSyncState
+import com.rampu.erasmapp.channels.domian.QuestionsStatus
 import com.rampu.erasmapp.channels.domian.QuestionsSyncState
 import com.rampu.erasmapp.common.util.emailPrefix
 import kotlinx.coroutines.channels.awaitClose
@@ -220,6 +221,7 @@ class FirebaseChannelRepository(
         val authorId = getString("authorId") ?: ""
         val authorLabel = getString("authorLabel") ?: authorId
         val createdAt = getLong("createdAt") ?: 0L
+        val authorPhotoUrl = getString("authorPhotoUrl")
 
         return Answer(
             id = id,
@@ -228,7 +230,8 @@ class FirebaseChannelRepository(
             body = body,
             authorId = authorId,
             authorLabel = authorLabel,
-            createdAt = createdAt
+            createdAt = createdAt,
+            authorPhotoUrl = authorPhotoUrl
         )
     }
 
@@ -245,7 +248,9 @@ class FirebaseChannelRepository(
         val createdAt = getLong("createdAt") ?: 0L
         val lastActivityAt = getLong("lastActivityAt") ?: createdAt
         val lastMessagePreview = getString("lastMessagePreview") ?: ""
-        val answerCount = getLong("answerCount")?: 0L
+        val answerCount = getLong("answerCount") ?: 0L
+        val status = QuestionsStatus.fromFirestore(getString("status"))
+        val acceptedAnswerId = getString("acceptedAnswerId")
 
         return Question(
             id = questionId,
@@ -258,7 +263,9 @@ class FirebaseChannelRepository(
             createdAt = createdAt,
             lastActivityAt = lastActivityAt,
             lastMessagePreview = lastMessagePreview,
-            answerCount = answerCount
+            answerCount = answerCount,
+            status = status,
+            acceptedAnswerId = acceptedAnswerId
         )
     }
 
@@ -271,6 +278,7 @@ class FirebaseChannelRepository(
         val topic = getString("topic") ?: ""
         val description = getString("description") ?: ""
         val createdBy = getString("createdBy") ?: ""
+        val iconKey = getString("iconKey")
 
         return Channel(
             id = channelId,
@@ -278,15 +286,15 @@ class FirebaseChannelRepository(
             topic = topic,
             description = description,
             createdBy = createdBy,
-            //TODO: make this work with Firestore
-            iconKey = null,
+            iconKey = iconKey,
         )
     }
 
     override suspend fun createChannel(
         title: String,
         topic: String,
-        description: String?
+        description: String?,
+        iconKey: String?
     ): Result<Unit> = runCatching {
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
         val channelId = firestore.channelFS().document().id
@@ -295,7 +303,8 @@ class FirebaseChannelRepository(
             "title" to title,
             "topic" to topic,
             "description" to description,
-            "createdBy" to user.uid
+            "createdBy" to user.uid,
+            "iconKey" to iconKey
         )
 
         firestore.channelFS().document(channelId).set(data).await()
@@ -323,7 +332,9 @@ class FirebaseChannelRepository(
             "createdAt" to createdAt,
             "lastActivityAt" to createdAt,
             "lastMessagePreview" to preview,
-            "answerCount" to 0L
+            "answerCount" to 0L,
+            "status" to QuestionsStatus.OPEN.firestoreValue,
+            "acceptedAnswerId" to null
         )
 
         firestore.questionsFS(channelId).document(questionId).set(data).await()
@@ -336,21 +347,71 @@ class FirebaseChannelRepository(
         body: String
     ): Result<Unit> = runCatching {
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
-        val answerId = firestore.answersFS(channelId, questionId).document().id
         val createdAt = System.currentTimeMillis()
         val authorLabel = emailPrefix(user.email)
+        val authorPhotoUrl = user.photoUrl?.toString()
+        val preview = body.take(100)
 
+        val questionRef = firestore.questionsFS(channelId).document(questionId)
+        val answerRef = firestore.answersFS(channelId, questionId).document()
+        val metaRef = firestore.userQuestionMetaFS(user.uid).document(questionId)
+
+        firestore.runTransaction { tx ->
+            val questionsSnap = tx.get(questionRef)
+            val currentCount = questionsSnap.getLong("answerCount") ?: 0L
+            val newCount = currentCount + 1
+
+            val answerData = mapOf(
+                "id" to answerRef.id,
+                "channelId" to channelId,
+                "questionId" to questionId,
+                "body" to body,
+                "authorId" to user.uid,
+                "authorLabel" to authorLabel,
+                "authorPhotoUrl" to authorPhotoUrl,
+                "createdAt" to createdAt
+            )
+
+            tx.set(answerRef, answerData)
+            tx.update(
+                questionRef,
+                mapOf(
+                    "answerCount" to newCount,
+                    "lastActivityAt" to createdAt,
+                    "lastMessagePreview" to preview
+                )
+            )
+            tx.set(
+                metaRef,
+                mapOf(
+                    "questionId" to questionId,
+                    "lastSeenAnswerCount" to newCount,
+                    "lastSeenAt" to createdAt
+                ),
+                SetOptions.merge()
+            )
+        }.await()
+    }
+
+    override suspend fun acceptAnswer(
+        channelId: String,
+        questionId: String,
+        answerId: String
+    ): Result<Unit> = runCatching {
         val data = mapOf(
-            "id" to answerId,
-            "channelId" to channelId,
-            "questionId" to questionId,
-            "body" to body,
-            "authorId" to user.uid,
-            "authorLabel" to authorLabel,
-            "createdAt" to createdAt
+            "status" to QuestionsStatus.ANSWERED.firestoreValue,
+            "acceptedAnswerId" to answerId
         )
+        firestore.questionsFS(channelId).document(questionId).update(data).await()
+    }
 
-        firestore.answersFS(channelId, questionId).document(answerId).set(data).await()
+    override suspend fun setQuestionStatus(
+        channelId: String,
+        questionsId: String,
+        status: QuestionsStatus
+    ): Result<Unit> = runCatching {
+        firestore.questionsFS(channelId).document(questionsId)
+            .update("status", status.firestoreValue).await()
     }
 
     override suspend fun updateQuestionMeta(
