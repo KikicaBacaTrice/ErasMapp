@@ -148,6 +148,11 @@ class ThreadViewModel(
             return
         }
 
+        if(question.status == QuestionStatus.LOCKED){
+            uiState.update { it.copy(errorMsg = "Thread is locked", canSendAnswer = false) }
+            return
+        }
+
         viewModelScope.launch {
             uiState.update { it.copy(isSaving = true, canSendAnswer = false) }
             val result = repo.createAnswer(

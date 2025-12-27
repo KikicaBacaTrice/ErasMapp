@@ -17,4 +17,5 @@
     <string name="your_answer">Your answer...</string>
     <string name="no_answers_yet">No answers yet</string>
     <string name="go_to_accepted_answer">Go to accepted answer</string>
+    <string name="mark_as_accepted_answer">Mark as accepted answer</string>
 </resources>

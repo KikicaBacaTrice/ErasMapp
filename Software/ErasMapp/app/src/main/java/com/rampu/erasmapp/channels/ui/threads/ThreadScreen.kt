@@ -4,6 +4,8 @@ import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -90,15 +94,6 @@ fun ThreadScreen(
             }
         }
 
-        !state.errorMsg.isNullOrBlank() -> {
-            ErrorMessage(
-                message = state.errorMsg,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            )
-        }
-
         else -> {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -116,6 +111,15 @@ fun ThreadScreen(
                         )
                     }
                     Text(text = state.channelTitle, style = MaterialTheme.typography.titleLarge)
+                }
+
+                if (!state.errorMsg.isNullOrBlank()) {
+                    ErrorMessage(
+                        message = state.errorMsg,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                    )
                 }
 
                 LazyColumn(
@@ -226,7 +230,9 @@ fun ThreadScreen(
                             isMine = answer.authorId == state.currentUserId,
                             timeText = formatTime(context, answer.createdAt),
                             isAccepted = answer.id == acceptedAnswerId,
-                            highlight = answer.id == highlightId
+                            highlight = answer.id == highlightId,
+                            canAccept = status != QuestionStatus.LOCKED,
+                            onAccept = { onEvent(ThreadEvent.AcceptAnswer(answerId = answer.id)) }
                         )
                     }
                 }
@@ -268,26 +274,43 @@ fun ThreadScreen(
 fun ThreadStatus(status: QuestionStatus, onToggleLock: () -> Unit, modifier: Modifier = Modifier) {
     val icon =
         if (status == QuestionStatus.LOCKED) painterResource(R.drawable.lock) else painterResource(R.drawable.lock_open)
+    val enabled = status != QuestionStatus.OPEN
 
     IconButton(
         onClick = onToggleLock,
-        modifier = modifier
+        modifier = modifier,
+        enabled = enabled
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 
 }
 
 @Composable
-fun AnswerBubble(answer: Answer, isMine: Boolean, timeText: String, isAccepted: Boolean, highlight: Boolean) {
+fun AnswerBubble(
+    answer: Answer,
+    isMine: Boolean,
+    timeText: String,
+    isAccepted: Boolean,
+    highlight: Boolean,
+    canAccept: Boolean,
+    onAccept: () -> Unit
+) {
     val baseColor = when {
         isAccepted -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         isMine -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
 
-    val target = if(highlight) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else baseColor
+    val target = if (highlight) MaterialTheme.colorScheme.primary.copy(alpha = 0.35f) else baseColor
     val bgColor by animateColorAsState(target)
+
+    val canShowMenu = canAccept && !isAccepted
+    var showMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -299,43 +322,59 @@ fun AnswerBubble(answer: Answer, isMine: Boolean, timeText: String, isAccepted: 
             Spacer(Modifier.width(8.dp))
         }
 
-        Column(
-            modifier = Modifier
-                .background(bgColor, RoundedCornerShape(12.dp))
-                .padding(12.dp)
-                .fillMaxWidth(0.85f)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = answer.authorLabel, style = MaterialTheme.typography.labelSmall
-                )
-                if (isAccepted) {
-                    Spacer(Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = stringResource(R.string.accepted_answer),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.height(12.dp)
-                    )
-                }
-            }
-            Text(text = answer.body, style = MaterialTheme.typography.bodyMedium)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        Box {
+            Column(
+                modifier = Modifier
+                    .background(bgColor, RoundedCornerShape(12.dp))
+                    .combinedClickable(
+                        enabled = canShowMenu,
+                        onClick = {},
+                        onLongClick = { showMenu = true })
+                    .padding(12.dp)
+                    .fillMaxWidth(0.85f)
             ) {
-                if (isAccepted) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.accepted),
+                        text = answer.authorLabel, style = MaterialTheme.typography.labelSmall
+                    )
+                    if (isAccepted) {
+                        Spacer(Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = stringResource(R.string.accepted_answer),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.height(12.dp)
+                        )
+                    }
+                }
+                Text(text = answer.body, style = MaterialTheme.typography.bodyMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    if (isAccepted) {
+                        Text(
+                            text = stringResource(R.string.accepted),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        text = timeText,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Text(
-                    text = timeText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+
+                DropdownMenu(expanded = showMenu, onDismissRequest = {showMenu = false}) {
+                    DropdownMenuItem(
+                        text = {Text(stringResource(R.string.mark_as_accepted_answer))},
+                        onClick = {
+                            showMenu = false
+                            onAccept()
+                        }
+                    )
+                }
             }
         }
 
