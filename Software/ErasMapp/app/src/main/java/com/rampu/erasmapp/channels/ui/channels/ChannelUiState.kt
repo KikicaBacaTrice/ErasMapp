@@ -11,4 +11,5 @@ data class ChannelUiState(
     val newTitle: String = "",
     val newTopic : String = "",
     val newDescription: String = "",
+    val newIconKey: String? = null
 )

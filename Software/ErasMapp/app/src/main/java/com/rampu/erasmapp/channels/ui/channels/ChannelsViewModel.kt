@@ -69,6 +69,7 @@ class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
                 uiState.update { it.copy(showCreateDialog = false)}
                 }
             is ChannelEvent.ShowCreateDialog -> uiState.update { it.copy(showCreateDialog = event.show) }
+            is ChannelEvent.IconChanged -> uiState.update { it.copy(newIconKey = event.key) }
         }
     }
 
@@ -77,14 +78,16 @@ class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
             val result = repo.createChannel(
                 title = uiState.value.newTitle,
                 topic = uiState.value.newTopic,
-                description = uiState.value.newDescription
+                description = uiState.value.newDescription,
+                iconKey = uiState.value.newIconKey
             )
             uiState.update {
                 if (result.isSuccess) {
                     it.copy(
                         newTitle = "",
                         newTopic = "",
-                        newDescription = ""
+                        newDescription = "",
+                        newIconKey = null
                     )
                 } else {
                     it.copy(

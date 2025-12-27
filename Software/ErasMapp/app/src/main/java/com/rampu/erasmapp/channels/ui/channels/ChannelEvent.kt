@@ -6,4 +6,5 @@ sealed interface ChannelEvent {
     data class DescriptionChanged(val v: String) : ChannelEvent
     data object CreateChannel: ChannelEvent
     data class ShowCreateDialog(val show: Boolean): ChannelEvent
+    data class IconChanged(val key: String?) : ChannelEvent
 }

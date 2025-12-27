@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rampu.erasmapp.channels.domian.Channel
+import com.rampu.erasmapp.common.ui.components.ErrorMessage
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
@@ -99,9 +100,25 @@ fun ChannelsScreen(
                             },
                             label = "Description"
                         )
+                        Column {
+                            Text(
+                                text = "Icon",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            ChannelIconPicker(
+                                selectedKey = state.newIconKey,
+                                onSelected = { onEvent(ChannelEvent.IconChanged(it)) }
+                            )
+                        }
                     }
                 }
             )
+        }
+
+        !state.errorMsg.isNullOrBlank() ->  {
+            Spacer(Modifier.height(12.dp))
+            ErrorMessage(message = state.errorMsg)
         }
 
         else -> {

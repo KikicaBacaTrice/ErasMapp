@@ -30,7 +30,7 @@ import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
 fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val icon = iconForKey(channel.iconKey)
+    val icon = channelIconForKey(channel.iconKey)
 
     Column(
         modifier = Modifier
@@ -89,23 +89,6 @@ fun ChannelItem(channel: Channel, onClick: () -> Unit, modifier: Modifier = Modi
             }
         }
     }
-}
-
-@Composable
-private fun iconForKey(iconKey: String?): ImageVector? {
-    val resiId = when (iconKey) {
-        "general" -> R.drawable.general
-        "dorms" -> R.drawable.dorms
-        "activities" -> R.drawable.activity
-        "college" -> R.drawable.college
-        "admin" -> R.drawable.admin
-        "events" -> R.drawable.event
-        "health" -> R.drawable.health
-        "travel" -> R.drawable.travel
-        else -> null
-    }
-
-    return resiId?.let { ImageVector.vectorResource(it) }
 }
 
 @Preview(heightDp = 200, showBackground = true)
