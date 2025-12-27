@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.channels.domian.QuestionStatus
 import com.rampu.erasmapp.common.ui.components.UserAvatar
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
@@ -52,6 +53,7 @@ fun QuestionItem(item: QuestionListItem, onClick: () -> Unit) {
         QuestionsMeta(
             lastActivityAt = item.lastActivityAt,
             unreadCount = item.unreadCount,
+            status = item.status
         )
     }
 }
@@ -69,7 +71,8 @@ fun QuestionItemPreview() {
                 authorLabel = "Author name",
                 authorPhotoUrl = null,
                 lastActivityAt = System.currentTimeMillis(),
-                unreadCount = 10
+                unreadCount = 10,
+                status = QuestionStatus.OPEN
             ),
         )
     }

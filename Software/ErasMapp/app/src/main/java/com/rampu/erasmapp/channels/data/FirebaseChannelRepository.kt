@@ -16,7 +16,7 @@ import com.rampu.erasmapp.channels.domian.Question
 import com.rampu.erasmapp.channels.domian.QuestionDetailSyncState
 import com.rampu.erasmapp.channels.domian.QuestionMeta
 import com.rampu.erasmapp.channels.domian.QuestionMetaSyncState
-import com.rampu.erasmapp.channels.domian.QuestionsStatus
+import com.rampu.erasmapp.channels.domian.QuestionStatus
 import com.rampu.erasmapp.channels.domian.QuestionsSyncState
 import com.rampu.erasmapp.common.util.emailPrefix
 import kotlinx.coroutines.channels.awaitClose
@@ -249,7 +249,7 @@ class FirebaseChannelRepository(
         val lastActivityAt = getLong("lastActivityAt") ?: createdAt
         val lastMessagePreview = getString("lastMessagePreview") ?: ""
         val answerCount = getLong("answerCount") ?: 0L
-        val status = QuestionsStatus.fromFirestore(getString("status"))
+        val status = QuestionStatus.fromFirestore(getString("status"))
         val acceptedAnswerId = getString("acceptedAnswerId")
 
         return Question(
@@ -333,7 +333,7 @@ class FirebaseChannelRepository(
             "lastActivityAt" to createdAt,
             "lastMessagePreview" to preview,
             "answerCount" to 0L,
-            "status" to QuestionsStatus.OPEN.firestoreValue,
+            "status" to QuestionStatus.OPEN.firestoreValue,
             "acceptedAnswerId" to null
         )
 
@@ -399,7 +399,7 @@ class FirebaseChannelRepository(
         answerId: String
     ): Result<Unit> = runCatching {
         val data = mapOf(
-            "status" to QuestionsStatus.ANSWERED.firestoreValue,
+            "status" to QuestionStatus.ANSWERED.firestoreValue,
             "acceptedAnswerId" to answerId
         )
         firestore.questionsFS(channelId).document(questionId).update(data).await()
@@ -408,7 +408,7 @@ class FirebaseChannelRepository(
     override suspend fun setQuestionStatus(
         channelId: String,
         questionsId: String,
-        status: QuestionsStatus
+        status: QuestionStatus
     ): Result<Unit> = runCatching {
         firestore.questionsFS(channelId).document(questionsId)
             .update("status", status.firestoreValue).await()

@@ -9,4 +9,6 @@
     <string name="sign_up">Sign Up</string>
     <string name="don_t_have_an_account">Don’t have an account?</string>
     <string name="password_visibility_icon">Password visibility icon</string>
+    <string name="open">Open</string>
+    <string name="answered">Answered</string>
 </resources>

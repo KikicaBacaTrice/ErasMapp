@@ -33,7 +33,7 @@ interface IChannelRepository {
     suspend fun setQuestionStatus(
         channelId: String,
         questionsId: String,
-        status: QuestionsStatus
+        status: QuestionStatus
     ): Result<Unit>
 
     suspend fun updateQuestionMeta(questionId: String, lastSeenAnswerCount: Long): Result<Unit>

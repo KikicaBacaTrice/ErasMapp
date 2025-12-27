@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.channels.domian.QuestionStatus
 import com.rampu.erasmapp.common.ui.components.ErrorMessage
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
@@ -122,6 +126,10 @@ fun QuestionsScreen(
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Spacer(Modifier.height(10.dp))
+                    QuestionFilterTabs(
+                        selected = state.filter,
+                        onSelected = { onEvent(QuestionsEvent.FilterChanged(it)) })
+                    Spacer(Modifier.height(10.dp))
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(bottom = 72.dp),
@@ -145,6 +153,36 @@ fun QuestionsScreen(
     }
 }
 
+@Composable
+fun QuestionFilterTabs(selected: QuestionFilter, onSelected: (QuestionFilter) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        QuestionFilter.entries.forEach { filter ->
+            FilterChip(
+                selected = filter == selected,
+                onClick = { onSelected(filter) },
+                label = { Text(filter.label) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                )
+            )
+        }
+
+    }
+
+}
+
+@Preview(showBackground = true)
+@Composable
+fun QuestionFilterTabsPreview() {
+    ErasMappTheme {
+        QuestionFilterTabs(
+            selected = QuestionFilter.OPEN,
+            onSelected = {}
+        )
+    }
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun QuestionScreenPreview() {
@@ -167,10 +205,11 @@ fun QuestionScreenPreview() {
                         authorLabel = "Author name",
                         authorPhotoUrl = null,
                         lastActivityAt = System.currentTimeMillis(),
-                        unreadCount = 10
+                        unreadCount = 10,
+                        status = QuestionStatus.OPEN
                     )
                 ),
-                errorMsg = "Preview error"
+                errorMsg = null
             )
         )
     }

@@ -5,4 +5,5 @@ sealed interface QuestionsEvent {
     data class BodyChanged(val v: String) : QuestionsEvent
     data object CreateQuestion: QuestionsEvent
     data class ShowCreateDialog(val show: Boolean): QuestionsEvent
+    data class FilterChanged(val filter: QuestionFilter) : QuestionsEvent
 }

@@ -17,8 +17,15 @@ class QuestionsViewModel(
     private val channelTitle: String,
     private val repo: IChannelRepository
 ) : ViewModel() {
+    private val filterState = MutableStateFlow(QuestionFilter.OPEN)
     var uiState =
-        MutableStateFlow(QuestionsUiState(channelId = channelId, channelTitle = channelTitle))
+        MutableStateFlow(
+            QuestionsUiState(
+                channelId = channelId,
+                channelTitle = channelTitle,
+                filter = filterState.value
+            )
+        )
         private set
     private var observeJob: Job? = null
 
@@ -31,15 +38,24 @@ class QuestionsViewModel(
         observeJob = viewModelScope.launch {
             combine(
                 repo.observeQuestions(channelId),
-                repo.observerQuestionMeta()
-            ) { questionState, metaState -> questionState to metaState }.collect { (questionState, metaState) ->
+                repo.observerQuestionMeta(),
+                filterState
+            ) { questionState, metaState, filter ->
+                Triple(
+                    questionState,
+                    metaState,
+                    filter
+                )
+            }.collect { (questionState, metaState, filter) ->
                 when (questionState) {
                     is QuestionsSyncState.Loading -> uiState.update {
                         it.copy(
                             isLoading = true,
-                            errorMsg = null
+                            errorMsg = null,
+                            filter = filter
                         )
                     }
+
                     is QuestionsSyncState.Success -> {
                         val metaMap = when (metaState) {
                             is QuestionMetaSyncState.Success -> metaState.meta.associateBy { it.questionId }
@@ -48,8 +64,12 @@ class QuestionsViewModel(
 
                         val userId = repo.currentUserId()
 
-                        Log.d("UI_STATE_ITEMS", "Before map: ${questionState.questions.count()}")
-                        val items = questionState.questions.map { q ->
+                        val filteredQuestions = questionState.questions.filter { q ->
+                            filter.matches(q.status)
+                        }
+                        Log.d("UI_STATE_ITEMS", "Before map: ${filteredQuestions.count()}")
+
+                        val items = filteredQuestions.map { q ->
                             val meta = metaMap[q.id]
                             val lastSeen = meta?.lastSeenAnswerCount ?: 0L
                             val isEngaged = userId != null && (q.authorId == userId || meta != null)
@@ -64,7 +84,8 @@ class QuestionsViewModel(
                                 authorLabel = q.authorLabel,
                                 authorPhotoUrl = q.authorPhotoUrl,
                                 lastActivityAt = q.lastActivityAt,
-                                unreadCount = unread
+                                unreadCount = unread,
+                                status = q.status
                             )
                         }
 
@@ -73,24 +94,29 @@ class QuestionsViewModel(
                                 questions = items,
                                 isLoading = false,
                                 errorMsg = null,
-                                isSignedOut = false
+                                isSignedOut = false,
+                                filter = filter
                             )
                         }
 
                         Log.d("UI_STATE_ITEMS", items.count().toString())
                     }
+
                     is QuestionsSyncState.Error -> uiState.update {
                         it.copy(
                             isLoading = false,
                             errorMsg = questionState.message,
+                            filter = filter
                         )
                     }
+
                     is QuestionsSyncState.SignedOut -> uiState.update {
                         it.copy(
                             questions = emptyList(),
                             isLoading = false,
                             errorMsg = "You need to sign in to view messages",
-                            isSignedOut = true
+                            isSignedOut = true,
+                            filter = filter
                         )
                     }
                 }
@@ -108,6 +134,10 @@ class QuestionsViewModel(
             }
 
             is QuestionsEvent.ShowCreateDialog -> uiState.update { it.copy(showCreateDialog = event.show) }
+            is QuestionsEvent.FilterChanged -> {
+                filterState.value = event.filter
+                uiState.update { it.copy(filter = event.filter) }
+            }
         }
     }
 

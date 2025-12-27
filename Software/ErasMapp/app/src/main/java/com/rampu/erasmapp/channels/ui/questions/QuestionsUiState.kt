@@ -14,5 +14,6 @@ data class QuestionsUiState (
     val newBody: String = "",
     val resultMsg: String? = null,
     val isSaving: Boolean = false,
-    val showCreateDialog: Boolean = false
+    val showCreateDialog: Boolean = false,
+    val filter: QuestionFilter = QuestionFilter.OPEN
 )
