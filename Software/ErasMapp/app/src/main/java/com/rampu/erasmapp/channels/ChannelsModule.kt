@@ -9,8 +9,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val channelsModule = module {
-    single<IChannelRepository> { FirebaseChannelRepository(get(), get()) }
-    viewModel { ChannelsViewModel(get()) }
+    single<IChannelRepository> { FirebaseChannelRepository(get(), get(), get()) }
+    viewModel { ChannelsViewModel(get(), get()) }
     viewModel { (channelId: String, channelTitle: String) ->
         QuestionsViewModel(
             channelId,
@@ -23,6 +23,7 @@ val channelsModule = module {
             channelId,
             channelTitle,
             questionId,
+            get(),
             get()
         )
     }

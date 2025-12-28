@@ -18,7 +18,7 @@ import com.rampu.erasmapp.channels.domian.QuestionMeta
 import com.rampu.erasmapp.channels.domian.QuestionMetaSyncState
 import com.rampu.erasmapp.channels.domian.QuestionStatus
 import com.rampu.erasmapp.channels.domian.QuestionsSyncState
-import com.rampu.erasmapp.common.util.emailPrefix
+import com.rampu.erasmapp.user.domain.IUserRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -26,7 +26,8 @@ import kotlinx.coroutines.tasks.await
 
 class FirebaseChannelRepository(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val userRepo: IUserRepository
 ) : IChannelRepository {
     override fun observeChannels(): Flow<ChannelSyncState> = callbackFlow {
         var registration: ListenerRegistration? = null
@@ -318,7 +319,7 @@ class FirebaseChannelRepository(
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
         val questionId = firestore.questionsFS(channelId).document().id
         val createdAt = System.currentTimeMillis()
-        val authorLabel = emailPrefix(user.email)
+        val authorLabel = userRepo.getCurrentUserLabel()
         val authorPhotoUrl = user.photoUrl?.toString()
         val preview = body.take(100).ifBlank { title }
         val data = mapOf(
@@ -340,7 +341,6 @@ class FirebaseChannelRepository(
         firestore.questionsFS(channelId).document(questionId).set(data).await()
     }
 
-    //TODO: need to change when i add post registration flow
     override suspend fun createAnswer(
         channelId: String,
         questionId: String,
@@ -348,7 +348,7 @@ class FirebaseChannelRepository(
     ): Result<Unit> = runCatching {
         val user = auth.currentUser ?: throw IllegalStateException("Missing user session")
         val createdAt = System.currentTimeMillis()
-        val authorLabel = emailPrefix(user.email)
+        val authorLabel = userRepo.getCurrentUserLabel()
         val authorPhotoUrl = user.photoUrl?.toString()
         val preview = body.take(100)
 

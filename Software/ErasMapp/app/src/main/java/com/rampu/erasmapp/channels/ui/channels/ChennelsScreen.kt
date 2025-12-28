@@ -52,7 +52,7 @@ fun ChannelsScreen(
             }
         }
 
-        state.showCreateDialog -> {
+        state.showCreateDialog && state.isAdmin -> {
             AlertDialog(
                 onDismissRequest = {
                     onEvent(ChannelEvent.ShowCreateDialog(false))

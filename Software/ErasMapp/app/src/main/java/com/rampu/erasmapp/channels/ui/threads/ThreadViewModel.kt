@@ -6,6 +6,7 @@ import com.rampu.erasmapp.channels.domian.AnswerSyncState
 import com.rampu.erasmapp.channels.domian.IChannelRepository
 import com.rampu.erasmapp.channels.domian.QuestionDetailSyncState
 import com.rampu.erasmapp.channels.domian.QuestionStatus
+import com.rampu.erasmapp.user.domain.IUserRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -15,7 +16,8 @@ class ThreadViewModel(
     private val channelId: String,
     private val channelTitle: String,
     private val questionId: String,
-    private val repo: IChannelRepository
+    private val repo: IChannelRepository,
+    private val userRepo: IUserRepository
 ) : ViewModel() {
     var uiState = MutableStateFlow(
         ThreadUiState(
@@ -26,13 +28,23 @@ class ThreadViewModel(
     )
         private set
 
+    private var adminJob: Job? = null
     private var questionJob: Job? = null
     private var answerJob: Job? = null
 
     init {
         uiState.update { it.copy(currentUserId = repo.currentUserId()) }
+        observeAdminStatus()
         observeQuestion()
         observeAnswers()
+    }
+
+    private fun observeAdminStatus() {
+        adminJob?.cancel()
+        adminJob = viewModelScope.launch {
+            userRepo.observeAdminStatus()
+                .collect { isAdmin -> uiState.update { it.copy(isAdmin = isAdmin) } }
+        }
     }
 
     private fun observeQuestion() {
@@ -148,7 +160,7 @@ class ThreadViewModel(
             return
         }
 
-        if(question.status == QuestionStatus.LOCKED){
+        if (question.status == QuestionStatus.LOCKED) {
             uiState.update { it.copy(errorMsg = "Thread is locked", canSendAnswer = false) }
             return
         }
@@ -206,21 +218,31 @@ class ThreadViewModel(
     }
 
     private fun toggleLock() {
+        if (!uiState.value.isAdmin) {
+            uiState.update { it.copy(errorMsg = "Only staff can lock or unlock threads") }
+            return
+        }
         val question = uiState.value.question ?: return
-        if(question.status == QuestionStatus.OPEN) return
+        if (question.status == QuestionStatus.OPEN) return
 
-        val newStatus = if(question.status == QuestionStatus.LOCKED) QuestionStatus.ANSWERED else QuestionStatus.LOCKED
+        val newStatus =
+            if (question.status == QuestionStatus.LOCKED) QuestionStatus.ANSWERED else QuestionStatus.LOCKED
         viewModelScope.launch {
-            val result = repo.setQuestionStatus(channelId,questionId,newStatus)
-            if(result.isFailure) uiState.update { it.copy(errorMsg = "Unable to update thread status") }
-            else{
-                val msg = if(newStatus == QuestionStatus.LOCKED) "Thread locked" else "Thread unlocked"
+            val result = repo.setQuestionStatus(channelId, questionId, newStatus)
+            if (result.isFailure) uiState.update { it.copy(errorMsg = "Unable to update thread status") }
+            else {
+                val msg =
+                    if (newStatus == QuestionStatus.LOCKED) "Thread locked" else "Thread unlocked"
                 uiState.update { it.copy(toastMsg = msg) }
             }
         }
     }
 
     private fun acceptAnswer(answerId: String) {
+        if (!uiState.value.isAdmin) {
+            uiState.update { it.copy(errorMsg = "Only staff can mark answers as accepted") }
+            return
+        }
         val question = uiState.value.question ?: return
         if (question.status == QuestionStatus.LOCKED) {
             uiState.update { it.copy(errorMsg = "Thread is locked") }

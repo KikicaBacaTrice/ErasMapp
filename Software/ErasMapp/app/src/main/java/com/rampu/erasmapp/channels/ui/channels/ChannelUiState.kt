@@ -7,6 +7,7 @@ data class ChannelUiState(
     val isLoading: Boolean = true,
     val errorMsg: String? = null,
     val isSignedOut: Boolean = false,
+    val isAdmin: Boolean = false,
     val showCreateDialog: Boolean = false,
     val newTitle: String = "",
     val newTopic : String = "",

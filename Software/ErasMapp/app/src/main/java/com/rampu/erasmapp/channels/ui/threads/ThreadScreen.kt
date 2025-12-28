@@ -161,11 +161,16 @@ fun ThreadScreen(
                                         )
                                     }
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        ThreadStatus(status = status, onToggleLock = {
-                                            onEvent(
-                                                ThreadEvent.ToggleLock
-                                            )
-                                        }, modifier = Modifier.width(20.dp))
+                                        ThreadStatus(
+                                            status = status,
+                                            isAdmin = state.isAdmin,
+                                            onToggleLock = {
+                                                onEvent(
+                                                    ThreadEvent.ToggleLock
+                                                )
+                                            },
+                                            modifier = Modifier.width(20.dp)
+                                        )
                                         Spacer(Modifier.width(10.dp))
                                         Box(
                                             modifier = Modifier
@@ -231,7 +236,7 @@ fun ThreadScreen(
                             timeText = formatTime(context, answer.createdAt),
                             isAccepted = answer.id == acceptedAnswerId,
                             highlight = answer.id == highlightId,
-                            canAccept = status != QuestionStatus.LOCKED,
+                            canAccept = state.isAdmin && status != QuestionStatus.LOCKED,
                             onAccept = { onEvent(ThreadEvent.AcceptAnswer(answerId = answer.id)) }
                         )
                     }
@@ -271,10 +276,15 @@ fun ThreadScreen(
 }
 
 @Composable
-fun ThreadStatus(status: QuestionStatus, onToggleLock: () -> Unit, modifier: Modifier = Modifier) {
+fun ThreadStatus(
+    status: QuestionStatus,
+    isAdmin: Boolean,
+    onToggleLock: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val icon =
         if (status == QuestionStatus.LOCKED) painterResource(R.drawable.lock) else painterResource(R.drawable.lock_open)
-    val enabled = status != QuestionStatus.OPEN
+    val enabled = isAdmin && status != QuestionStatus.OPEN
 
     IconButton(
         onClick = onToggleLock,
@@ -366,9 +376,9 @@ fun AnswerBubble(
                     )
                 }
 
-                DropdownMenu(expanded = showMenu, onDismissRequest = {showMenu = false}) {
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
-                        text = {Text(stringResource(R.string.mark_as_accepted_answer))},
+                        text = { Text(stringResource(R.string.mark_as_accepted_answer)) },
                         onClick = {
                             showMenu = false
                             onAccept()

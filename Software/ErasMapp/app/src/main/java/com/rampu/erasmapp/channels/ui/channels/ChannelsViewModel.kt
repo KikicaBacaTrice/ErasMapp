@@ -1,21 +1,42 @@
 package com.rampu.erasmapp.channels.ui.channels
 
+import androidx.compose.runtime.currentComposer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rampu.erasmapp.channels.domian.ChannelSyncState
 import com.rampu.erasmapp.channels.domian.IChannelRepository
+import com.rampu.erasmapp.user.domain.IUserRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
+class ChannelsViewModel(
+    private val repo: IChannelRepository,
+    private val userRepo: IUserRepository
+) : ViewModel() {
     var uiState = MutableStateFlow(ChannelUiState())
         private set;
-    private var observeJob: Job? = null;
+    private var observeJob: Job? = null
+    private var adminJob: Job? = null
 
     init {
+        observeAdminStatus()
         observeChannels()
+    }
+
+    private fun observeAdminStatus() {
+        adminJob?.cancel()
+        adminJob = viewModelScope.launch {
+            userRepo.observeAdminStatus().collect { isAdmin ->
+                uiState.update {
+                    it.copy(
+                        isAdmin = isAdmin,
+                        showCreateDialog = if (isAdmin) it.showCreateDialog else false
+                    )
+                }
+            }
+        }
     }
 
     private fun observeChannels() {
@@ -65,15 +86,30 @@ class ChannelsViewModel(private val repo: IChannelRepository) : ViewModel() {
             is ChannelEvent.TopicChanged -> uiState.update { it.copy(newTopic = event.v) }
             is ChannelEvent.DescriptionChanged -> uiState.update { it.copy(newDescription = event.v) }
             is ChannelEvent.CreateChannel -> {
-                createChannel()
-                uiState.update { it.copy(showCreateDialog = false)}
+                if (!uiState.value.isAdmin) {
+                    uiState.update { it.copy(errorMsg = "Only staff can create channels") }
+                    return
                 }
-            is ChannelEvent.ShowCreateDialog -> uiState.update { it.copy(showCreateDialog = event.show) }
+                createChannel()
+                uiState.update { it.copy(showCreateDialog = false) }
+            }
+
+            is ChannelEvent.ShowCreateDialog -> {
+                if (!uiState.value.isAdmin && event.show)
+                    uiState.update { it.copy(errorMsg = "Only staff can create channels") }
+                else uiState.update { it.copy(showCreateDialog = event.show) }
+            }
+
             is ChannelEvent.IconChanged -> uiState.update { it.copy(newIconKey = event.key) }
         }
     }
 
     private fun createChannel() {
+        if (!uiState.value.isAdmin) {
+            uiState.update { it.copy(errorMsg = "Only staff can create channels") }
+            return
+        }
+
         viewModelScope.launch {
             val result = repo.createChannel(
                 title = uiState.value.newTitle,

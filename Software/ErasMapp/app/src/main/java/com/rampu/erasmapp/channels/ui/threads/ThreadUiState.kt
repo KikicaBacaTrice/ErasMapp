@@ -12,6 +12,7 @@ data class ThreadUiState(
     val isLoading: Boolean = true,
     val errorMsg: String? = null,
     val isSignedOut: Boolean = false,
+    val isAdmin: Boolean = false,
     val isSaving: Boolean = false,
     val newAnswer: String = "",
     val currentUserId: String? = null,
