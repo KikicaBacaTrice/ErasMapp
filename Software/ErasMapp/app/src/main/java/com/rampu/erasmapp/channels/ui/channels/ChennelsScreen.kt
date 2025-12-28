@@ -116,7 +116,7 @@ fun ChannelsScreen(
             )
         }
 
-        !state.errorMsg.isNullOrBlank() ->  {
+        !state.errorMsg.isNullOrBlank() -> {
             Spacer(Modifier.height(12.dp))
             ErrorMessage(message = state.errorMsg)
         }
@@ -139,13 +139,15 @@ fun ChannelsScreen(
                         text = "Channels",
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Medium)
                     )
-                    IconButton(
-                        onClick = { onEvent(ChannelEvent.ShowCreateDialog(true)) }
-                    ) {
-                        Icon(
-                            Icons.Filled.Add,
-                            contentDescription = "Add channel"
-                        )
+                    if (state.isAdmin) {
+                        IconButton(
+                            onClick = { onEvent(ChannelEvent.ShowCreateDialog(true)) }
+                        ) {
+                            Icon(
+                                Icons.Filled.Add,
+                                contentDescription = "Add channel"
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(10.dp))
@@ -164,6 +166,7 @@ fun ChannelsScreen(
         }
     }
 }
+
 
 @Preview(showSystemUi = false, showBackground = true)
 @Composable
