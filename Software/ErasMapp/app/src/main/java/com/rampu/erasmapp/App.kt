@@ -4,6 +4,7 @@ import android.app.Application
 import com.rampu.erasmapp.auth.authModule
 import com.rampu.erasmapp.channels.channelsModule
 import com.rampu.erasmapp.eventCalendar.eventCalendarModule
+import com.rampu.erasmapp.news.newsModule
 import com.rampu.erasmapp.schedule.scheduleModule
 import com.rampu.erasmapp.session.sessionModule
 import com.rampu.erasmapp.user.userModule
@@ -22,7 +23,8 @@ class App : Application(){
                 userModule,
                 scheduleModule,
                 eventCalendarModule,
-                channelsModule
+                channelsModule,
+                newsModule
             )
         }
 
