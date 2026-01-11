@@ -4,8 +4,11 @@ import android.app.Application
 import android.content.pm.PackageManager
 import com.google.android.libraries.places.api.Places
 import com.rampu.erasmapp.auth.authModule
+import com.rampu.erasmapp.channels.channelsModule
+import com.rampu.erasmapp.eventCalendar.eventCalendarModule
 import com.rampu.erasmapp.schedule.scheduleModule
 import com.rampu.erasmapp.session.sessionModule
+import com.rampu.erasmapp.user.userModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -28,7 +31,10 @@ class App : Application(){
             modules(
                 authModule,
                 sessionModule,
-                scheduleModule
+                userModule,
+                scheduleModule,
+                eventCalendarModule,
+                channelsModule
             )
         }
 

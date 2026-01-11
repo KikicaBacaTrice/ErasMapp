@@ -131,4 +131,10 @@ dependencies {
 
 // Google maps Compose
     implementation(libs.maps.compose)
+
+    // Calendar
+    implementation("com.kizitonwose.calendar:compose:2.9.0")
+
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }
