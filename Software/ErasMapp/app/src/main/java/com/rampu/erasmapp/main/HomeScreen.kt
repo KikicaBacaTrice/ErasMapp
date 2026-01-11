@@ -16,9 +16,9 @@ import androidx.compose.ui.unit.dp
 import com.rampu.erasmapp.NavigationActivity
 
 @Composable
-fun HomeScreen(onSignOut: () -> Unit){
-    val context = LocalContext.current
-    Column(
+fun HomeScreen(onSignOut: () -> Unit, onGoToSchedule: () -> Unit){
+  val context = LocalContext.current
+  Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -27,6 +27,7 @@ fun HomeScreen(onSignOut: () -> Unit){
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        
         Button(onClick = {
             context.startActivity(Intent(context, NavigationActivity::class.java))
         }) {
@@ -38,6 +39,9 @@ fun HomeScreen(onSignOut: () -> Unit){
             onClick = onSignOut
         ){
             Text("Sign out")
+        }
+        Button(onClick = onGoToSchedule) {
+            Text("Go to Schedule")
         }
     }
 
