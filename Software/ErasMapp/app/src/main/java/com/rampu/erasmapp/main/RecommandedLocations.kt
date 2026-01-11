@@ -2,12 +2,12 @@ package com.rampu.erasmapp.main
 
 import com.google.android.gms.maps.model.LatLng
 
-data class PointOfInterest(
+data class RecommendedPlace(
     val name: String,
     val location: LatLng
 )
 
-data class PointOfInterestWithDistance(
-    val poi: PointOfInterest,
+data class RecommendedPlaceWithDistance(
+    val place: RecommendedPlace,
     val distance: Float
 )
