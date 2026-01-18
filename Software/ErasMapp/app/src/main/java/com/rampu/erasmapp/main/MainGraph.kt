@@ -204,9 +204,12 @@ fun MainGraph(
                     NewsScreen(
                         onBack = { navController.popBackStack() },
                         onEvent = vm::onEvent,
-                        state = state.value
+                        state = state.value,
+                        onOpenNews = { newsId -> navController.navigate(NewsDetailRoute(newsId)) }
                     )
                 }
+
+
 
             }
         }

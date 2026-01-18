@@ -1,26 +1,90 @@
 package com.rampu.erasmapp.news.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.rampu.erasmapp.common.ui.components.ErrorMessage
+import com.rampu.erasmapp.common.ui.components.LoadingIndicator
+import com.rampu.erasmapp.news.domain.NewsItem
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
 fun NewsScreen(
     onBack: () -> Unit,
     onEvent: (event: NewsEvent) -> Unit,
+    onOpenNews: (newsId: String) -> Unit,
     state: NewsUiState,
-){
+) {
+    val context = LocalContext.current
 
+    when {
+        state.isLoading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                LoadingIndicator()
+            }
+        }
+
+        !state.errorMsg.isNullOrBlank() -> {
+            ErrorMessage(message = state.errorMsg)
+        }
+
+        else -> {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(state.news, key = { it.id }) { item ->
+                        NewsListItem(
+                            item = item,
+                            context = context,
+                            onClick = { onOpenNews(item.id) }
+                        )
+
+                    }
+                }
+
+            }
+        }
+    }
 }
 
 @Composable
 @Preview()
-fun NewsScreenPreview(){
+fun NewsScreenPreview() {
     ErasMappTheme {
         NewsScreen(
-            onBack = {},
-            onEvent = {},
-            state = NewsUiState()
+            onBack = { },
+            onEvent = { },
+            onOpenNews = { },
+            state = NewsUiState(
+                isLoading = false,
+                news = listOf(
+                    NewsItem(
+                        id = "id",
+                        title = "Title 1",
+                        body = "Body 1",
+                        topic = "topic 1",
+                        isUrgent = false,
+                        createdAt = System.currentTimeMillis(),
+                        authorId = "author"
+                    )
+                )
+            )
         )
     }
 }
