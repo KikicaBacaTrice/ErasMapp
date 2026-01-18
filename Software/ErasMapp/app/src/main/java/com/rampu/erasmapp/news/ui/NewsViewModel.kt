@@ -18,7 +18,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
         private set
 
     private var observeJob: Job? = null
-    private var adminJob: Job? =null
+    private var adminJob: Job? = null
 
     init {
         observeNews()
@@ -29,7 +29,12 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
         adminJob?.cancel()
         adminJob = viewModelScope.launch {
             userRepo.observeAdminStatus().collect { isAdmin ->
-                uiState.update { it.copy(isAdmin = isAdmin, showEditor = if (isAdmin) it.showEditor else false) }
+                uiState.update {
+                    it.copy(
+                        isAdmin = isAdmin,
+                        showEditor = if (isAdmin) it.showEditor else false
+                    )
+                }
             }
         }
     }
@@ -105,6 +110,27 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
             is NewsEvent.ShowEditor -> openEditor(event.item)
             is NewsEvent.DismissEditor -> dismissEditor()
             is NewsEvent.SaveNews -> saveNews()
+            is NewsEvent.DeleteNews -> deleteNews(event.newsId)
+        }
+    }
+
+    private fun deleteNews(newsId: String) {
+        if (!uiState.value.isAdmin) {
+            uiState.update { it.copy(actionError = "Only staff can manage news") }
+            return
+        }
+        if (newsId.isBlank()) return
+
+        viewModelScope.launch {
+            uiState.update { it.copy(isSaving = true) }
+            val result = repo.deleteNews(newsId)
+            uiState.update {
+                if (result.isSuccess) it.copy(isSaving = false, actionError = null) else it.copy(
+                    isSaving = false,
+                    actionError = "Error when deleting news"
+                )
+            }
+
         }
     }
 
@@ -116,7 +142,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
         }
 
         val title = state.editTitle.trim()
-        val topic = state.editBody.trim()
+        val topic = state.editTopic.trim()
         val body = state.editBody.trim()
 
         if (title.isBlank() || body.isBlank() || topic.isBlank()) {
@@ -126,6 +152,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
 
         val createdAt =
             if (state.editId.isNullOrBlank()) System.currentTimeMillis() else state.editCreatedAt
+        val authorId = if (state.editId.isNullOrBlank()) null else state.editAuthorId
 
         val item = NewsItem(
             id = state.editId.orEmpty(),
@@ -134,7 +161,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
             topic = topic,
             isUrgent = state.editUrgent,
             createdAt = createdAt,
-            authorId = null
+            authorId = authorId
         )
 
         viewModelScope.launch {
@@ -171,6 +198,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
                     editBody = "",
                     editUrgent = false,
                     editCreatedAt = 0L,
+                    editAuthorId = null,
                     editorError = null,
                 )
             } else {
@@ -182,6 +210,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
                     editTopic = item.topic,
                     editUrgent = item.isUrgent,
                     editCreatedAt = item.createdAt,
+                    editAuthorId = item.authorId,
                     editorError = null
                 )
             }
@@ -196,6 +225,8 @@ private fun NewsUiState.resetEditor(): NewsUiState = copy(
     editTopic = "",
     editBody = "",
     editUrgent = false,
+    editCreatedAt = 0L,
+    editAuthorId = null,
     isSaving = false,
     editorError = null
 )
