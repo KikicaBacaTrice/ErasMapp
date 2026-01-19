@@ -49,6 +49,8 @@ fun channelIconLabelForKey(iconKey: String?): String?{
     return channelIconOptions.firstOrNull{it.key == iconKey}?.label
 }
 
+fun channelIconOptionsList() = channelIconOptions
+
 @Composable
 fun ChannelIconPicker(
     selectedKey: String?,

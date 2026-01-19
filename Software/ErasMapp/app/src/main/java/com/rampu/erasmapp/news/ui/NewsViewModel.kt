@@ -111,6 +111,7 @@ class NewsViewModel(private val repo: INewsRepository, private val userRepo: IUs
             is NewsEvent.DismissEditor -> dismissEditor()
             is NewsEvent.SaveNews -> saveNews()
             is NewsEvent.DeleteNews -> deleteNews(event.newsId)
+            is NewsEvent.FilterChanged -> uiState.update { it.copy(selectedTopic = event.topicKey) }
         }
     }
 

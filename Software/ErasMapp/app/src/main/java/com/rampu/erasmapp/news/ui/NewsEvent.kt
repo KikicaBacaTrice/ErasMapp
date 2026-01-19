@@ -11,4 +11,5 @@ sealed interface NewsEvent {
     data class BodyChanged(val v: String) : NewsEvent
     data class UrgentChanged(val v: Boolean) : NewsEvent
     data class DeleteNews(val newsId: String) : NewsEvent
+    data class FilterChanged(val topicKey: String?) : NewsEvent
 }

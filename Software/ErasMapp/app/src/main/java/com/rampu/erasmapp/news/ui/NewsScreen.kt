@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.rampu.erasmapp.common.ui.components.ErrorMessage
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
 import com.rampu.erasmapp.news.domain.NewsItem
+import com.rampu.erasmapp.news.ui.components.NewsCategoryFilter
 import com.rampu.erasmapp.news.ui.components.NewsEditor
 import com.rampu.erasmapp.news.ui.components.NewsHeader
 import com.rampu.erasmapp.news.ui.components.NewsListItem
@@ -48,6 +49,10 @@ fun NewsScreen(
         }
 
         else -> {
+            val filteredNews = if (state.selectedTopic.isNullOrBlank()) state.news
+            else state.news.filter { it.topic == state.selectedTopic }
+
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -60,11 +65,14 @@ fun NewsScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 state.actionError?.let { ErrorMessage(message = it) }
+                NewsCategoryFilter(selectedTopic = state.selectedTopic, onSelected = {onEvent(
+                    NewsEvent.FilterChanged(it))})
+                Spacer(Modifier.height(10.dp))
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.news, key = { it.id }) { item ->
+                    items(filteredNews, key = { it.id }) { item ->
                         NewsListItem(
                             item = item,
                             context = context,

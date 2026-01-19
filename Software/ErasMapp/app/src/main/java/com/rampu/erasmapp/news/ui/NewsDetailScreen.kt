@@ -40,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -215,18 +214,22 @@ fun NewsDetailScreen(
                 ListItem(
                     headlineContent = { Text("Edit") },
                     leadingContent = { Icon(Icons.Outlined.Edit, contentDescription = "Edit") },
-                    modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = {
-                        showBottomSheet = false
-                        onEvent(NewsEvent.ShowEditor(item))
-                    })
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(onClick = {
+                            showBottomSheet = false
+                            onEvent(NewsEvent.ShowEditor(item))
+                        })
                 )
                 ListItem(
                     headlineContent = { Text("Delete") },
                     leadingContent = { Icon(Icons.Outlined.Delete, contentDescription = "Delete") },
-                    modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = {
-                        showBottomSheet = false
-                        deleteTarget = item
-                    })
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable(onClick = {
+                            showBottomSheet = false
+                            deleteTarget = item
+                        })
                 )
             }
         }
