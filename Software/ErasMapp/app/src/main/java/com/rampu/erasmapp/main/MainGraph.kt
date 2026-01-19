@@ -36,6 +36,7 @@ import com.rampu.erasmapp.channels.ui.questions.QuestionsViewModel
 import com.rampu.erasmapp.channels.ui.threads.ThreadScreen
 import com.rampu.erasmapp.channels.ui.threads.ThreadViewModel
 import com.rampu.erasmapp.eventCalendar.ui.EventCalendarScreen
+import com.rampu.erasmapp.news.ui.NewsDetailScreen
 import com.rampu.erasmapp.news.ui.NewsScreen
 import com.rampu.erasmapp.news.ui.NewsViewModel
 import com.rampu.erasmapp.schedule.ui.ScheduleScreen
@@ -209,8 +210,18 @@ fun MainGraph(
                     )
                 }
 
+                composable<NewsDetailRoute> { backstackEntry ->
+                    val route = backstackEntry.toRoute<NewsDetailRoute>()
+                    val vm: NewsViewModel = koinViewModel()
+                    val state = vm.uiState.collectAsStateWithLifecycle()
 
-
+                    NewsDetailScreen(
+                        newsId = route.newsId,
+                        onBack = { navController.popBackStack() },
+                        onEvent = vm::onEvent,
+                        state = state.value
+                    )
+                }
             }
         }
     }
