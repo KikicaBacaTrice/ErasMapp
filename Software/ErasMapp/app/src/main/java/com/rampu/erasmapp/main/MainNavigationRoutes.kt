@@ -16,3 +16,5 @@ import kotlinx.serialization.Serializable
 @Serializable object FOIRoute
 @Serializable data class QuestionsRoute(val channelId: String, val channelTitle: String)
 @Serializable data class ThreadRoute(val channelId: String, val channelTitle: String, val questionId: String)
+@Serializable object NewsRoute
+@Serializable data class NewsDetailRoute(val newsId: String)
