@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
@@ -28,12 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.toRoute
 import com.rampu.erasmapp.R
 import com.rampu.erasmapp.adminConsole.AdminConsoleScreen
@@ -46,6 +48,7 @@ import com.rampu.erasmapp.channels.ui.questions.QuestionsScreen
 import com.rampu.erasmapp.channels.ui.questions.QuestionsViewModel
 import com.rampu.erasmapp.channels.ui.threads.ThreadScreen
 import com.rampu.erasmapp.channels.ui.threads.ThreadViewModel
+import com.rampu.erasmapp.common.ui.components.UserAvatar
 import com.rampu.erasmapp.eventCalendar.ui.EventCalendarScreen
 import com.rampu.erasmapp.foibuildings.BuildingScreen
 import com.rampu.erasmapp.navigation.MapScreen
@@ -80,14 +83,42 @@ fun MainGraph(
             topBarState = state
         }
     }
+    val openProfile = {
+        navController.navigate(ProfileRoute) {
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 
     val topLevelDestinations = listOf(
         TopLevelDestination("Home", Icons.Filled.Home, HomeRoute),
         TopLevelDestination("Schedule", Icons.Filled.DateRange, ScheduleRoute),
         TopLevelDestination("Map", Icons.Filled.Place, NavigationRoute),
-        TopLevelDestination("News", Icons.Filled.Notifications, NewsRoute),
-        TopLevelDestination("Profile", Icons.Filled.Person, ProfileRoute)
+        TopLevelDestination("Channels", Icons.AutoMirrored.Filled.List, ChannelsRoute),
+        TopLevelDestination("News", Icons.Filled.Notifications, NewsRoute)
     )
+
+    val currentTopLevelDestination = topLevelDestinations.firstOrNull { destination ->
+        routeMatches(currentRoute, destination.route)
+    }
+    val showProfileAction = currentTopLevelDestination != null
+    val currentEntryId = navBackStackEntry?.id
+    val activeTopBarState = if (topBarOwnerId == currentEntryId) topBarState else null
+    val profileLabel = stringResource(R.string.profile)
+    val resolvedTopBarState = when {
+        activeTopBarState != null -> activeTopBarState
+        currentTopLevelDestination != null -> TopBarState(
+            title = currentTopLevelDestination.label
+        )
+        routeMatches(currentRoute, ProfileRoute) -> TopBarState(
+            title = profileLabel,
+            onNavigateUp = { navController.navigateUp() }
+        )
+        else -> null
+    }
 
     val showBottomBar = topLevelDestinations.any { destination ->
         routeMatches(currentRoute, destination.route)
@@ -97,7 +128,7 @@ fun MainGraph(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                topBarState?.let { state ->
+                resolvedTopBarState?.let { state ->
                     TopAppBar(
                         title = {
                             Text(
@@ -116,7 +147,12 @@ fun MainGraph(
                                 }
                             }
                         },
-                        actions = state.actions
+                        actions = {
+                            state.actions(this)
+                            if (showProfileAction) {
+                                ProfileActionButton(onClick = openProfile)
+                            }
+                        }
                     )
                 }
             },
@@ -160,7 +196,7 @@ fun MainGraph(
                 composable<ScheduleRoute> { backstackEntry ->
                     ScheduleScreen(
                         setTopBar = setTopBar,
-                        topBarOwnerId = backstackEntry.id.toString()
+                        topBarOwnerId = backstackEntry.id
                     )
                 }
                 composable<EventCalendarRoute> {
@@ -213,7 +249,6 @@ fun MainGraph(
                     val state = vm.uiState.collectAsStateWithLifecycle()
 
                     ChannelsScreen(
-                        onBack = { navController.popBackStack() },
                         onEvent = vm::onEvent,
                         state = state.value,
                         onChannelSelected = { id, title ->
@@ -276,7 +311,7 @@ fun MainGraph(
 
                     NewsScreen(
                         setTopBar = setTopBar,
-                        topBarOwnerId = backstackEntry.id.toString(),
+                        topBarOwnerId = backstackEntry.id,
                         onEvent = vm::onEvent,
                         state = state.value,
                         onOpenNews = { newsId -> navController.navigate(NewsDetailRoute(newsId)) }
@@ -311,6 +346,19 @@ private data class TopLevelDestination(
     val icon: ImageVector,
     val route: Any
 )
+
+@Composable
+private fun ProfileActionButton(
+    onClick: () -> Unit
+) {
+    IconButton(onClick = onClick) {
+        UserAvatar(
+            label = stringResource(R.string.profile),
+            icon = Icons.Filled.Person,
+            size = 32.dp
+        )
+    }
+}
 
 @Composable
 private fun MainBottomBar(

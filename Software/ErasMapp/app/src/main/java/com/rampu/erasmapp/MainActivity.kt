@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.rememberNavController
 import com.rampu.erasmapp.auth.ui.AuthGraph
 import com.rampu.erasmapp.common.ui.LoadingScreen
 import com.rampu.erasmapp.main.MainGraph

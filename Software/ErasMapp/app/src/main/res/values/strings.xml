@@ -19,4 +19,5 @@
     <string name="go_to_accepted_answer">Go to accepted answer</string>
     <string name="mark_as_accepted_answer">Mark as accepted answer</string>
     <string name="navigate_up">Back</string>
+    <string name="profile">Profile</string>
 </resources>
