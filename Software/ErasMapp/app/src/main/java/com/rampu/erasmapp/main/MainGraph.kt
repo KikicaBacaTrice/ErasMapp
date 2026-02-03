@@ -274,6 +274,8 @@ fun MainGraph(
                         channelId = channelId,
                         channelTitle = channelTitle,
                         onBack = { navController.popBackStack() },
+                        setTopBar = setTopBar,
+                        topBarOwnerId = backstackEntry.id,
                         onOpenQuestion = { questionId ->
                             navController.navigate(
                                 ThreadRoute(channelId, channelTitle, questionId)
