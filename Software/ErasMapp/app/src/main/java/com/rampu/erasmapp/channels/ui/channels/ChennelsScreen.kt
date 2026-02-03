@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,9 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,11 +35,74 @@ import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
 fun ChannelsScreen(
-    onBack: () -> Unit,
     onChannelSelected: (String, String) -> Unit,
     onEvent: (event: ChannelEvent) -> Unit,
     state: ChannelUiState
 ) {
+    if (state.showCreateDialog && state.isAdmin) {
+        AlertDialog(
+            onDismissRequest = {
+                onEvent(ChannelEvent.ShowCreateDialog(false))
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onEvent(ChannelEvent.CreateChannel)
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        onEvent(ChannelEvent.ShowCreateDialog(false))
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(15.dp)
+                ) {
+                    LabeledInputField(
+                        value = state.newTitle,
+                        onValueChange = {
+                            onEvent(ChannelEvent.TitleChanged(it))
+                        },
+                        label = "Title"
+                    )
+                    LabeledInputField(
+                        value = state.newTopic,
+                        onValueChange = {
+                            onEvent(ChannelEvent.TopicChanged(it))
+                        },
+                        label = "Topic"
+                    )
+                    LabeledInputField(
+                        value = state.newDescription,
+                        onValueChange = {
+                            onEvent(ChannelEvent.DescriptionChanged(it))
+                        },
+                        label = "Description"
+                    )
+                    Column {
+                        Text(
+                            text = "Icon",
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        ChannelIconPicker(
+                            selectedKey = state.newIconKey,
+                            onSelected = { onEvent(ChannelEvent.IconChanged(it)) }
+                        )
+                    }
+                }
+            }
+        )
+    }
+
     when {
         state.isLoading -> {
             Box(
@@ -52,115 +113,70 @@ fun ChannelsScreen(
             }
         }
 
-        state.showCreateDialog && state.isAdmin -> {
-            AlertDialog(
-                onDismissRequest = {
-                    onEvent(ChannelEvent.ShowCreateDialog(false))
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            onEvent(ChannelEvent.CreateChannel)
-                        }
-                    ) {
-                        Text("Save")
-                    }
-                },
-                dismissButton = {
-                    Button(
-                        onClick = {
-                            onEvent(ChannelEvent.ShowCreateDialog(false))
-                        }
-                    ) {
-                        Text("Cancel")
-                    }
-                },
-                text = {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(15.dp)
-                    ) {
-                        LabeledInputField(
-                            value = state.newTitle,
-                            onValueChange = {
-                                onEvent(ChannelEvent.TitleChanged(it))
-                            },
-                            label = "Title"
-                        )
-                        LabeledInputField(
-                            value = state.newTopic,
-                            onValueChange = {
-                                onEvent(ChannelEvent.TopicChanged(it))
-                            },
-                            label = "Topic"
-                        )
-                        LabeledInputField(
-                            value = state.newDescription,
-                            onValueChange = {
-                                onEvent(ChannelEvent.DescriptionChanged(it))
-                            },
-                            label = "Description"
-                        )
-                        Column {
-                            Text(
-                                text = "Icon",
-                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            ChannelIconPicker(
-                                selectedKey = state.newIconKey,
-                                onSelected = { onEvent(ChannelEvent.IconChanged(it)) }
-                            )
-                        }
-                    }
-                }
-            )
-        }
-
         !state.errorMsg.isNullOrBlank() -> {
-            Spacer(Modifier.height(12.dp))
-            ErrorMessage(message = state.errorMsg)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ErrorMessage(message = state.errorMsg)
+            }
         }
 
         else -> {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
-
-                ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Channels",
-                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Medium)
-                    )
-                    if (state.isAdmin) {
-                        IconButton(
-                            onClick = { onEvent(ChannelEvent.ShowCreateDialog(true)) }
-                        ) {
-                            Icon(
-                                Icons.Filled.Add,
-                                contentDescription = "Add channel"
-                            )
+                    .padding(8.dp)
+            ) {
+                if (state.channels.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No channels yet",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = "Start a new channel by tapping on the button in the lower right corner.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (state.isAdmin) {
+                            Spacer(Modifier.height(16.dp))
+                            Button(
+                                onClick = { onEvent(ChannelEvent.ShowCreateDialog(true)) }
+                            ) {
+                                Text("Create channel")
+                            }
+                        }
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        items(state.channels, key = { it.id }) { channel ->
+                            ChannelItem(
+                                channel,
+                                onClick = { onChannelSelected(channel.id, channel.title) })
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(16.dp)
-                ) {
-                    items(state.channels, key = { it.id }) { channel ->
-                        ChannelItem(
-                            channel,
-                            onClick = { onChannelSelected(channel.id, channel.title) })
-                    }
+
+                if (state.isAdmin) {
+                    ExtendedFloatingActionButton(
+                        onClick = { onEvent(ChannelEvent.ShowCreateDialog(true)) },
+                        text = { Text("New channel") },
+                        icon = { Icon(Icons.Filled.Add, contentDescription = "Create channel") },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                    )
                 }
             }
         }
@@ -173,7 +189,6 @@ fun ChannelsScreen(
 fun ChannelScreenPreview() {
     ErasMappTheme {
         ChannelsScreen(
-            onBack = {},
             onEvent = {},
             onChannelSelected = { _, _ -> },
             state = ChannelUiState(
