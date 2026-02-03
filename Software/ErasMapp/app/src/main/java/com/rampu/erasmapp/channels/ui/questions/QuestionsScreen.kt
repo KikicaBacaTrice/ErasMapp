@@ -4,32 +4,45 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.font.FontWeight
 import com.rampu.erasmapp.channels.domian.QuestionStatus
+import com.rampu.erasmapp.common.ui.components.DialogConfirmButton
+import com.rampu.erasmapp.common.ui.components.DialogDismissButton
 import com.rampu.erasmapp.common.ui.components.ErrorMessage
 import com.rampu.erasmapp.common.ui.components.LabeledInputField
 import com.rampu.erasmapp.common.ui.components.LoadingIndicator
+import com.rampu.erasmapp.main.TopBarState
 import com.rampu.erasmapp.ui.theme.ErasMappTheme
 
 @Composable
@@ -37,10 +50,30 @@ fun QuestionsScreen(
     channelId: String,
     channelTitle: String,
     onBack: () -> Unit,
+    setTopBar: (String, TopBarState?) -> Unit,
+    topBarOwnerId: String,
     onOpenQuestion: (String) -> Unit,
     onEvent: (event: QuestionsEvent) -> Unit,
     state: QuestionsUiState
 ) {
+    val showTitleError = state.newTitle.isBlank()
+    val showBodyError = state.newBody.isBlank()
+
+    SideEffect {
+        setTopBar(
+            topBarOwnerId,
+            TopBarState(
+                title = channelTitle,
+                onNavigateUp = onBack
+            )
+        )
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            setTopBar(topBarOwnerId, null)
+        }
+    }
+
     when {
         state.isLoading -> {
             Box(
@@ -52,46 +85,78 @@ fun QuestionsScreen(
         }
 
         state.showCreateDialog -> {
+            val canSubmit = !showTitleError && !showBodyError && !state.isSaving
             AlertDialog(
                 onDismissRequest = {
                     onEvent(QuestionsEvent.ShowCreateDialog(false))
                 },
+                title = {
+                    Text(text = "New question", style = MaterialTheme.typography.titleLarge)
+                },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            onEvent(QuestionsEvent.CreateQuestion)
-                        }
-                    ) {
-                        Text("Post")
-                    }
+                    DialogConfirmButton(
+                        text = "Post",
+                        onClick = { onEvent(QuestionsEvent.CreateQuestion) },
+                        enabled = canSubmit
+                    )
                 },
                 dismissButton = {
-                    Button(
-                        onClick = {
-                            onEvent(QuestionsEvent.ShowCreateDialog(false))
-                        }
-                    ) {
-                        Text("Cancel")
-                    }
+                    DialogDismissButton(
+                        text = "Cancel",
+                        onClick = { onEvent(QuestionsEvent.ShowCreateDialog(false)) }
+                    )
                 },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
+                        Text(
+                            text = "Be clear and specific so others can answer quickly.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         LabeledInputField(
                             value = state.newTitle,
                             onValueChange = {
                                 onEvent(QuestionsEvent.TitleChanged(it))
                             },
-                            label = "Title"
-                        )
-                        LabeledInputField(
-                            value = state.newBody,
-                            onValueChange = {
-                                onEvent(QuestionsEvent.BodyChanged(it))
+                            label = "Title",
+                            placeholder = "e.g., How do I ...",
+                            supportingText = {
+                                Text(if (showTitleError) "Title is required." else "Keep it short and specific.")
                             },
-                            label = "Topic"
+                            isError = showTitleError,
+                            enabled = !state.isSaving
                         )
+                        Column {
+                            Text(
+                                text = "Body",
+                                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            TextField(
+                                value = state.newBody,
+                                onValueChange = { onEvent(QuestionsEvent.BodyChanged(it)) },
+                                placeholder = { Text("Ask a clear, specific question") },
+                                shape = RoundedCornerShape(5.dp),
+                                isError = showBodyError,
+                                colors = TextFieldDefaults.colors(
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 4,
+                                maxLines = 8,
+                                enabled = !state.isSaving
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = if (showBodyError) "Body is required." else "Add context and what you already tried.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (showBodyError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             )
@@ -103,14 +168,7 @@ fun QuestionsScreen(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        text = channelTitle,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    ErrorMessage(message = state.errorMsg)
-                }
+                ErrorMessage(message = state.errorMsg)
             }
         }
 
@@ -121,32 +179,81 @@ fun QuestionsScreen(
                     .padding(16.dp)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        text = channelTitle,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Spacer(Modifier.height(10.dp))
                     QuestionFilterTabs(
                         selected = state.filter,
                         onSelected = { onEvent(QuestionsEvent.FilterChanged(it)) })
                     Spacer(Modifier.height(10.dp))
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(bottom = 72.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(state.questions, key = { it.id }) { item ->
-                            QuestionItem(item = item, onClick = { onOpenQuestion(item.id) })
+                    if (state.questions.isEmpty()) {
+                        val isTrulyEmpty = state.totalCount == 0
+                        val title = when {
+                            isTrulyEmpty -> "No questions yet"
+                            state.filter == QuestionFilter.OPEN -> "No open questions"
+                            else -> "No answered questions"
+                        }
+                        val subtitle = when {
+                            isTrulyEmpty -> "Be the first to ask a question in this channel."
+                            state.filter == QuestionFilter.OPEN ->
+                                "All questions are answered or locked."
+
+                            else -> "Check back later or view open questions."
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            if (!isTrulyEmpty) {
+                                val targetFilter =
+                                    if (state.filter == QuestionFilter.OPEN) QuestionFilter.ANSWERED else QuestionFilter.OPEN
+                                val buttonLabel =
+                                    if (state.filter == QuestionFilter.OPEN) "View answered questions" else "View open questions"
+                                OutlinedButton(
+                                    onClick = { onEvent(QuestionsEvent.FilterChanged(targetFilter)) }
+                                ) {
+                                    Text(buttonLabel)
+                                }
+                                Spacer(Modifier.height(12.dp))
+                            }
+                            TextButton(
+                                onClick = { onEvent(QuestionsEvent.ShowCreateDialog(show = true)) }
+                            ) {
+                                Text("Ask a question")
+                            }
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(state.questions, key = { it.id }) { item ->
+                                QuestionItem(item = item, onClick = { onOpenQuestion(item.id) })
+                            }
                         }
                     }
                 }
-                FloatingActionButton(
+                ExtendedFloatingActionButton(
                     onClick = { onEvent(QuestionsEvent.ShowCreateDialog(show = true)) },
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add question")
-                }
+                    text = { Text("Ask question") },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = "Add question") },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                )
             }
 
         }
@@ -154,9 +261,12 @@ fun QuestionsScreen(
 }
 
 @Composable
-fun QuestionFilterTabs(selected: QuestionFilter, onSelected: (QuestionFilter) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        QuestionFilter.entries.forEach { filter ->
+fun QuestionFilterTabs(
+    selected: QuestionFilter,
+    onSelected: (QuestionFilter) -> Unit
+) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(QuestionFilter.entries, key = { it.name }) { filter ->
             FilterChip(
                 selected = filter == selected,
                 onClick = { onSelected(filter) },
@@ -166,7 +276,6 @@ fun QuestionFilterTabs(selected: QuestionFilter, onSelected: (QuestionFilter) ->
                 )
             )
         }
-
     }
 
 }
@@ -191,6 +300,8 @@ fun QuestionScreenPreview() {
             channelId = "asdf",
             channelTitle = "Activites",
             onBack = {},
+            setTopBar = { _, _ -> },
+            topBarOwnerId = "preview",
             onOpenQuestion = {},
             onEvent = {},
             state = QuestionsUiState(
