@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -33,21 +32,16 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,10 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.rampu.erasmapp.main.TopBarState
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -67,7 +60,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
-    onBack: () -> Unit = {}
+    setTopBar: (TopBarState?) -> Unit,
+    onBack: (() -> Unit)? = null
 ) {
     val viewModel: ScheduleViewModel = koinViewModel()
     val uiState by viewModel.uiState.collectAsState()
@@ -90,6 +84,23 @@ fun ScheduleScreen(
         "${currentWeekStart.format(weekFormatterWithYear)}-${weekEnd.format(weekFormatterWithYear)}"
     }
 
+    DisposableEffect(isWeeklyView, onBack) {
+        setTopBar(
+            TopBarState(
+                title = "Schedule",
+                onNavigateUp = onBack,
+                actions = {
+                    TextButton(onClick = { viewModel.toggleViewMode() }) {
+                        Text(if (isWeeklyView) "Weekly View" else "Daily View")
+                    }
+                }
+            )
+        )
+        onDispose {
+            setTopBar(null)
+        }
+    }
+
     fun getCategoryColor(category: String): Color {
         return when (category.lowercase()) {
             "lecture" -> Color(0xFFE63946)
@@ -102,53 +113,14 @@ fun ScheduleScreen(
         }
     }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (!uiState.isSignedOut && !uiState.isSaving) {
-                        viewModel.setAddDialogVisible(true)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Event")
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End
-    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .padding(bottom = 72.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        "Schedule",
-                        fontSize = 42.sp,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.W600
-                    )
-                }
-                Button(onClick = { viewModel.toggleViewMode() }) {
-                    Text(if (isWeeklyView) "Weekly View" else "Daily View")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             if (uiState.isSyncing && events.isNotEmpty()) {
                 LinearProgressIndicator(
                     modifier = Modifier
@@ -390,6 +362,20 @@ fun ScheduleScreen(
                     }
                 }
             }
+        }
+
+        FloatingActionButton(
+            onClick = {
+                if (!uiState.isSignedOut && !uiState.isSaving) {
+                    viewModel.setAddDialogVisible(true)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Event")
         }
     }
 
