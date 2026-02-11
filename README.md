@@ -4,14 +4,6 @@
 To run the app, you need to add your Google Maps API key to the file local.properties. The key should be added in this format: 
 GOOGLE_MAPS_API_KEY=xxxxxxxxxxxxxxxx
 
-## Project team
-
-First and last name | E-mail address (FOI) | JMBAG | Github username | Seminar group
-------------  | ------------------- | ----- | --------------------- | ----------------
-Luka Kanjir | lkanjir23@student.foi.hr | 0016164491 | lkanjir23 | G01
-Nikola Kihas | nkihas23@student.foi.hr | 0016165847 | nkihas23 | G01
-Sofiane Saou | ssaou25@student.foi.hr | 0016179480 | 444sofiane | -
-
 ## Domain description
 
 ErasMapp is a mobile application designed to help Erasmus exchange students at FOI integrate smoothly into their new environment. The app aims to make their stay in Varaždin more organized, social, and enjoyable by providing all the essential information and tools they need in one place.
